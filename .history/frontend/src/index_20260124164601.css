@@ -1,0 +1,504 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-color: #0a0a0c;
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a0a0;
+  --accent-green: #00ff41;
+  --accent-red: #ff3333;
+  --glass-bg: rgba(20, 20, 25, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --font-mono: 'Courier New', Courier, monospace;
+}
+
+.font-orbitron {
+  font-family: 'Orbitron', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Background Drone Swarm Layer */
+.drone-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  /* Option 1: Generated Image with Slow Pan */
+  background: linear-gradient(to bottom, rgba(0, 20, 30, 0.4), #0a0a0c),
+    url('/bg-drone-v2.png');
+  background-size: 110%;
+  /* Slightly larger for movement */
+  background-position: center;
+  opacity: 1;
+  animation: bg-pan 20s ease-in-out infinite alternate;
+}
+
+@keyframes bg-pan {
+  from {
+    background-position: 50% 50%;
+  }
+
+  to {
+    background-position: 50% 45%;
+  }
+}
+
+/* Atmospheric Fog Layer */
+.fog-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 100%, rgba(0, 255, 65, 0.05), transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+  animation: fog-pulse 8s infinite alternate;
+}
+
+@keyframes fog-pulse {
+  from {
+    opacity: 0.3;
+  }
+
+  to {
+    opacity: 0.7;
+  }
+}
+
+/* Container */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* --- TV Turn On Animation Refined --- */
+@keyframes tv-turn-on-y {
+  0% {
+    transform: scaleY(0.005);
+    opacity: 0;
+  }
+
+  60% {
+    transform: scaleY(0.005);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes tv-turn-on-x {
+  0% {
+    transform: scaleX(0.005);
+  }
+
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes crt-flicker {
+  0% {
+    opacity: 0.95;
+  }
+
+  5% {
+    opacity: 0.8;
+  }
+
+  10% {
+    opacity: 0.9;
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.95;
+  }
+
+  55% {
+    opacity: 0.85;
+  }
+
+  60% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.98;
+  }
+}
+
+.animate-tv-on {
+  animation:
+    tv-turn-on-x 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards,
+    tv-turn-on-y 0.4s cubic-bezier(0.23, 1, 0.32, 1) 0.3s forwards,
+    crt-flicker 2s infinite 0.7s;
+  transform: scaleX(0.005) scaleY(0.005);
+  transform-origin: center;
+  opacity: 0;
+  /* Start hidden until opacity:1 in keyframe */
+}
+
+/* Rugged Border Utility */
+.rugged-border {
+  position: relative;
+  border: 6px solid #18181b;
+  /* zinc-900 */
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
+}
+
+.rugged-border::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid #00ff41;
+  /* Neon Green */
+  border-radius: 6px;
+  pointer-events: none;
+  box-shadow: 0 0 10px rgba(0, 255, 65, 0.1);
+}
+
+/* Corner Bolts */
+.corner-bolt {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #27272a;
+  /* zinc-800 */
+  border: 1px solid #3f3f46;
+  /* zinc-700 */
+  border-radius: 50%;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.8), 0 1px 1px rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+.corner-bolt::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  background: #09090b;
+  /* zinc-950 */
+  border-radius: 50%;
+  opacity: 0.7;
+}
+
+/* Deep Glassmorphism */
+.deep-glass {
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/* HUD Button Clip Path */
+.clip-path-hud-btn {
+  clip-path: polygon(10px 0, 100% 0,
+      100% calc(100% - 10px), calc(100% - 10px) 100%,
+      0 100%, 0 10px);
+}
+
+/* Tablet Clip Path */
+.clip-path-tablet {
+  clip-path: polygon(20px 0, 100% 0,
+      100% calc(100% - 20px), calc(100% - 20px) 100%,
+      20px 100%, 0 calc(100% - 20px), 0 20px);
+}
+
+canvas {
+  display: block;
+  outline: none;
+}
+
+/* =============================================================================
+   TACTICAL UI ENHANCEMENTS - MILITARY/SCI-FI INTERFACE
+   ============================================================================= */
+
+/* --- NEON GLOW EFFECTS FOR LED NUMBERS --- */
+.neon-glow-intense {
+  color: #00ff41;
+  text-shadow:
+    /* Inner glow - tight and bright */
+    0 0 2px #00ff41,
+    0 0 5px #00ff41,
+    /* Middle bloom */
+    0 0 10px #00ff41,
+    0 0 20px rgba(0, 255, 65, 0.8),
+    /* Outer bloom - expansive */
+    0 0 40px rgba(0, 255, 65, 0.5),
+    0 0 60px rgba(0, 255, 65, 0.3),
+    0 0 80px rgba(0, 255, 65, 0.15);
+  filter: brightness(1.2);
+}
+
+/* Animated pulse for extra dynamism */
+.neon-pulse {
+  animation: neonPulse 2s ease-in-out infinite;
+}
+
+@keyframes neonPulse {
+
+  0%,
+  100% {
+    text-shadow:
+      0 0 2px #00ff41,
+      0 0 5px #00ff41,
+      0 0 10px #00ff41,
+      0 0 20px rgba(0, 255, 65, 0.8),
+      0 0 40px rgba(0, 255, 65, 0.5),
+      0 0 60px rgba(0, 255, 65, 0.3);
+    filter: brightness(1.2);
+  }
+
+  50% {
+    text-shadow:
+      0 0 3px #00ff41,
+      0 0 8px #00ff41,
+      0 0 15px #00ff41,
+      0 0 30px rgba(0, 255, 65, 0.9),
+      0 0 50px rgba(0, 255, 65, 0.6),
+      0 0 80px rgba(0, 255, 65, 0.4);
+    filter: brightness(1.4);
+  }
+}
+
+/* --- VIGNETTE OVERLAY FOR DEPTH --- */
+.vignette-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  background: radial-gradient(ellipse 80% 60% at 50% 40%,
+      transparent 20%,
+      rgba(0, 0, 0, 0.3) 50%,
+      rgba(0, 0, 0, 0.7) 80%,
+      rgba(0, 0, 0, 0.9) 100%);
+}
+
+/* Even stronger vignette for device focus */
+.device-focus-vignette {
+  background: radial-gradient(ellipse 60% 50% at 50% 35%,
+      transparent 0%,
+      rgba(0, 0, 0, 0.2) 30%,
+      rgba(0, 0, 0, 0.5) 60%,
+      rgba(0, 0, 0, 0.85) 100%);
+}
+
+/* --- TACTICAL WALLET BUTTON STYLING --- */
+.tactical-btn {
+  position: relative;
+  background: rgba(5, 5, 5, 0.9) !important;
+  border: 2px solid #00ff41 !important;
+  color: #00ff41 !important;
+  font-family: 'Orbitron', 'Courier New', monospace !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  /* Angled/clipped corners - cyberpunk style */
+  clip-path: polygon(12px 0, 100% 0,
+      100% calc(100% - 12px), calc(100% - 12px) 100%,
+      0 100%, 0 12px) !important;
+  box-shadow:
+    0 0 15px rgba(0, 255, 65, 0.3),
+    inset 0 0 20px rgba(0, 255, 65, 0.1) !important;
+  transition: all 0.3s ease !important;
+}
+
+.tactical-btn::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(135deg, #00ff41, transparent, #00ff41);
+  z-index: -1;
+  opacity: 0.3;
+  clip-path: polygon(12px 0, 100% 0,
+      100% calc(100% - 12px), calc(100% - 12px) 100%,
+      0 100%, 0 12px);
+}
+
+.tactical-btn:hover {
+  background: #00ff41 !important;
+  color: #000 !important;
+  box-shadow:
+    0 0 30px rgba(0, 255, 65, 0.6),
+    0 0 60px rgba(0, 255, 65, 0.3),
+    inset 0 0 30px rgba(0, 255, 65, 0.2) !important;
+  transform: scale(1.02);
+}
+
+/* Corner accent marks for tactical buttons */
+.tactical-btn::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid #00ff41;
+  border-top: 2px solid #00ff41;
+  opacity: 0.8;
+}
+
+/* --- COUNTDOWN DEVICE FRAME GLOW --- */
+.device-frame-glow {
+  filter:
+    drop-shadow(0 0 10px rgba(0, 255, 65, 0.3)) drop-shadow(0 0 30px rgba(0, 255, 65, 0.15)) drop-shadow(0 20px 50px rgba(0, 0, 0, 0.9));
+}
+
+/* --- SCANLINE ANIMATION FOR DEVICE SCREEN --- */
+.device-scanline {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(transparent 0%,
+      rgba(0, 255, 65, 0.03) 50%,
+      transparent 100%);
+  animation: scanlineMove 3s linear infinite;
+}
+
+@keyframes scanlineMove {
+  0% {
+    transform: translateY(-100%);
+  }
+
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+/* --- ENHANCED COUNTDOWN DISPLAY --- */
+.countdown-device-display {
+  font-family: 'Orbitron', ui-monospace, monospace;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  color: #00ff41;
+  text-shadow:
+    0 0 5px #00ff41,
+    0 0 10px #00ff41,
+    0 0 20px rgba(0, 255, 65, 0.8),
+    0 0 40px rgba(0, 255, 65, 0.5),
+    0 0 60px rgba(0, 255, 65, 0.3);
+}
+
+/* Scale utilities for device sizing */
+.device-scale-lg {
+  transform: scale(1.8);
+  transform-origin: center;
+}
+
+.device-scale-xl {
+  transform: scale(2.2);
+  transform-origin: center;
+}
+
+@media (max-width: 768px) {
+  .device-scale-lg {
+    transform: scale(1.3);
+  }
+
+  .device-scale-xl {
+    transform: scale(1.5);
+  }
+}
+
+/* --- AMBIENT GLOW BEHIND DEVICE --- */
+.device-ambient-glow {
+  position: absolute;
+  width: 120%;
+  height: 120%;
+  left: -10%;
+  top: -10%;
+  background: radial-gradient(ellipse at center,
+      rgba(0, 255, 65, 0.15) 0%,
+      rgba(0, 255, 65, 0.08) 30%,
+      transparent 70%);
+  filter: blur(30px);
+  pointer-events: none;
+}
+
+/* =============================================================================
+   SOLANA WALLET ADAPTER BUTTON OVERRIDE (HIGH SPECIFICITY)
+   ============================================================================= */
+
+/* Force tactical styling on wallet adapter buttons */
+.wallet-adapter-button.tactical-btn,
+button.wallet-adapter-button.tactical-btn,
+.wallet-adapter-button-trigger.tactical-btn {
+  background: rgba(5, 5, 5, 0.95) !important;
+  background-color: rgba(5, 5, 5, 0.95) !important;
+  border: 2px solid #00ff41 !important;
+  border-radius: 0 !important;
+  color: #00ff41 !important;
+  font-family: 'Orbitron', 'Courier New', monospace !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  clip-path: polygon(10px 0, 100% 0,
+      100% calc(100% - 10px), calc(100% - 10px) 100%,
+      0 100%, 0 10px) !important;
+  box-shadow:
+    0 0 15px rgba(0, 255, 65, 0.4),
+    inset 0 0 15px rgba(0, 255, 65, 0.1) !important;
+  transition: all 0.3s ease !important;
+}
+
+.wallet-adapter-button.tactical-btn:hover,
+button.wallet-adapter-button.tactical-btn:hover,
+.wallet-adapter-button-trigger.tactical-btn:hover {
+  background: #00ff41 !important;
+  background-color: #00ff41 !important;
+  color: #000 !important;
+  box-shadow:
+    0 0 30px rgba(0, 255, 65, 0.7),
+    0 0 60px rgba(0, 255, 65, 0.3) !important;
+}
+
+/* Override wallet adapter modal styles too */
+.wallet-adapter-modal-wrapper {
+  background: rgba(5, 5, 10, 0.95) !important;
+  border: 1px solid rgba(0, 255, 65, 0.3) !important;
+}
+
+.wallet-adapter-modal-title {
+  color: #00ff41 !important;
+  font-family: 'Orbitron', monospace !important;
+}
+
+.wallet-adapter-modal-list li button {
+  background: rgba(10, 10, 15, 0.9) !important;
+  border: 1px solid rgba(0, 255, 65, 0.2) !important;
+}
+
+.wallet-adapter-modal-list li button:hover {
+  background: rgba(0, 255, 65, 0.15) !important;
+  border-color: #00ff41 !important;
+}

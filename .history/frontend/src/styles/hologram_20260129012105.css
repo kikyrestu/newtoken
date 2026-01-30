@@ -1,0 +1,380 @@
+/* ============================================================================
+   HOLOGRAPHIC TERMINAL DASHBOARD STYLES
+   ============================================================================ */
+
+/* Hologram Glow Animation */
+@keyframes hologramGlow {
+
+    0%,
+    100% {
+        box-shadow:
+            0 0 5px rgba(0, 255, 65, 0.3),
+            0 0 10px rgba(0, 255, 65, 0.2),
+            0 0 20px rgba(0, 255, 65, 0.1),
+            inset 0 0 10px rgba(0, 255, 65, 0.05);
+    }
+
+    50% {
+        box-shadow:
+            0 0 10px rgba(0, 255, 65, 0.5),
+            0 0 20px rgba(0, 255, 65, 0.3),
+            0 0 30px rgba(0, 255, 65, 0.2),
+            inset 0 0 20px rgba(0, 255, 65, 0.1);
+    }
+}
+
+/* Scanline Animation */
+@keyframes scanline {
+    0% {
+        transform: translateY(-100%);
+    }
+
+    100% {
+        transform: translateY(100vh);
+    }
+}
+
+/* Subtle Flicker */
+@keyframes flicker {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    92% {
+        opacity: 1;
+    }
+
+    93% {
+        opacity: 0.8;
+    }
+
+    94% {
+        opacity: 1;
+    }
+
+    97% {
+        opacity: 0.9;
+    }
+
+    98% {
+        opacity: 1;
+    }
+}
+
+/* Glitch Effect */
+@keyframes glitch {
+
+    0%,
+    100% {
+        transform: translate(0);
+        filter: none;
+    }
+
+    20% {
+        transform: translate(-2px, 1px);
+        filter: hue-rotate(90deg);
+    }
+
+    40% {
+        transform: translate(1px, -1px);
+        filter: hue-rotate(-90deg);
+    }
+
+    60% {
+        transform: translate(-1px, 2px);
+    }
+
+    80% {
+        transform: translate(2px, -2px);
+    }
+}
+
+/* RGB Split Effect */
+@keyframes rgbSplit {
+
+    0%,
+    100% {
+        text-shadow: none;
+    }
+
+    25% {
+        text-shadow:
+            -1px 0 rgba(255, 0, 0, 0.5),
+            1px 0 rgba(0, 255, 255, 0.5);
+    }
+
+    50% {
+        text-shadow:
+            1px 0 rgba(255, 0, 0, 0.3),
+            -1px 0 rgba(0, 255, 255, 0.3);
+    }
+
+    75% {
+        text-shadow:
+            -1px 0 rgba(255, 0, 0, 0.5),
+            1px 0 rgba(0, 255, 255, 0.5);
+    }
+}
+
+/* Typing Cursor Blink */
+@keyframes cursorBlink {
+
+    0%,
+    50% {
+        opacity: 1;
+    }
+
+    51%,
+    100% {
+        opacity: 0;
+    }
+}
+
+/* Progress Bar Fill */
+@keyframes progressFill {
+    from {
+        width: 0%;
+    }
+}
+
+/* ============================================================================
+   HOLOGRAPHIC TERMINAL CLASSES
+   ============================================================================ */
+
+.holo-terminal {
+    background: linear-gradient(135deg,
+            rgba(0, 20, 10, 0.95) 0%,
+            rgba(5, 15, 10, 0.98) 50%,
+            rgba(0, 25, 15, 0.95) 100%);
+    border: 1px solid rgba(0, 255, 65, 0.3);
+    border-radius: 8px;
+    animation: hologramGlow 4s ease-in-out infinite, flicker 10s infinite;
+    position: relative;
+    overflow: hidden;
+}
+
+.holo-terminal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(0, 255, 65, 0.5) 50%,
+            transparent 100%);
+    animation: scanline 8s linear infinite;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* Hologram Border Corners */
+.holo-corner {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-color: #00ff41;
+    border-style: solid;
+}
+
+.holo-corner.top-left {
+    top: 4px;
+    left: 4px;
+    border-width: 2px 0 0 2px;
+}
+
+.holo-corner.top-right {
+    top: 4px;
+    right: 4px;
+    border-width: 2px 2px 0 0;
+}
+
+.holo-corner.bottom-left {
+    bottom: 4px;
+    left: 4px;
+    border-width: 0 0 2px 2px;
+}
+
+.holo-corner.bottom-right {
+    bottom: 4px;
+    right: 4px;
+    border-width: 0 2px 2px 0;
+}
+
+/* Glitch Text */
+.glitch-text {
+    position: relative;
+}
+
+.glitch-text:hover {
+    animation: glitch 0.3s ease-in-out;
+}
+
+/* RGB Split on hover */
+.rgb-split:hover {
+    animation: rgbSplit 0.5s ease-in-out;
+}
+
+/* Typing Cursor */
+.typing-cursor::after {
+    content: '▌';
+    animation: cursorBlink 1s infinite;
+    color: #00ff41;
+    margin-left: 2px;
+}
+
+/* Scanlines Overlay */
+.scanlines {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(0deg,
+            transparent 0px,
+            transparent 1px,
+            rgba(0, 0, 0, 0.1) 1px,
+            rgba(0, 0, 0, 0.1) 2px);
+    z-index: 5;
+}
+
+/* Hologram Panel */
+.holo-panel {
+    background: rgba(0, 255, 65, 0.03);
+    border: 1px solid rgba(0, 255, 65, 0.2);
+    border-radius: 4px;
+    position: relative;
+}
+
+.holo-panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg,
+            rgba(0, 255, 65, 0.05) 0%,
+            transparent 50%,
+            rgba(0, 255, 65, 0.02) 100%);
+    pointer-events: none;
+    border-radius: 4px;
+}
+
+/* Stat Bar */
+.stat-bar {
+    height: 4px;
+    background: rgba(0, 255, 65, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.stat-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00ff41, #00cc33);
+    border-radius: 2px;
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+    animation: progressFill 1s ease-out;
+}
+
+/* Terminal Text */
+.terminal-text {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    letter-spacing: 0.5px;
+}
+
+/* Status Indicators */
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    animation: hologramGlow 2s ease-in-out infinite;
+}
+
+.status-dot.active {
+    background: #00ff41;
+}
+
+.status-dot.warning {
+    background: #ffcc00;
+}
+
+.status-dot.error {
+    background: #ff3333;
+}
+
+/* Holographic Button */
+.holo-btn {
+    background: transparent;
+    border: 1px solid rgba(0, 255, 65, 0.5);
+    color: #00ff41;
+    padding: 6px 16px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.holo-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg,
+            transparent,
+            rgba(0, 255, 65, 0.2),
+            transparent);
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+}
+
+.holo-btn:hover {
+    background: rgba(0, 255, 65, 0.1);
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+}
+
+.holo-btn:hover::before {
+    transform: translateX(100%);
+}
+
+.holo-btn:active {
+    transform: scale(0.98);
+}
+
+/* Tab Styling */
+.holo-tab {
+    padding: 8px 16px;
+    color: rgba(0, 255, 65, 0.5);
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.holo-tab:hover {
+    color: rgba(0, 255, 65, 0.8);
+}
+
+.holo-tab.active {
+    color: #00ff41;
+    border-bottom-color: #00ff41;
+    text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+}
+
+/* List Item */
+.holo-list-item {
+    border-bottom: 1px solid rgba(0, 255, 65, 0.1);
+    transition: background 0.2s;
+}
+
+.holo-list-item:hover {
+    background: rgba(0, 255, 65, 0.05);
+}
+
+.holo-list-item:last-child {
+    border-bottom: none;
+}

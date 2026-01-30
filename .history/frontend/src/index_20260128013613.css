@@ -1,0 +1,1010 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-color: #0a0a0c;
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a0a0;
+  --accent-green: #00ff41;
+  --accent-red: #ff3333;
+  --glass-bg: rgba(20, 20, 25, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --font-mono: 'Courier New', Courier, monospace;
+}
+
+.font-orbitron {
+  font-family: 'Orbitron', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Background Drone Swarm Layer */
+.drone-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  /* Option 1: Generated Image with Slow Pan */
+  background: linear-gradient(to bottom, rgba(0, 20, 30, 0.4), #0a0a0c),
+    url('/bg-drone-v2.png');
+  background-size: 110%;
+  /* Slightly larger for movement */
+  background-position: center;
+  opacity: 1;
+  animation: bg-pan 20s ease-in-out infinite alternate;
+}
+
+@keyframes bg-pan {
+  from {
+    background-position: 50% 50%;
+  }
+
+  to {
+    background-position: 50% 45%;
+  }
+}
+
+/* Atmospheric Fog Layer */
+.fog-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 100%, rgba(0, 255, 65, 0.05), transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+  animation: fog-pulse 8s infinite alternate;
+}
+
+@keyframes fog-pulse {
+  from {
+    opacity: 0.3;
+  }
+
+  to {
+    opacity: 0.7;
+  }
+}
+
+/* Container */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* --- TV Turn On Animation Refined --- */
+@keyframes tv-turn-on-y {
+  0% {
+    transform: scaleY(0.005);
+    opacity: 0;
+  }
+
+  60% {
+    transform: scaleY(0.005);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes tv-turn-on-x {
+  0% {
+    transform: scaleX(0.005);
+  }
+
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes crt-flicker {
+  0% {
+    opacity: 0.95;
+  }
+
+  5% {
+    opacity: 0.8;
+  }
+
+  10% {
+    opacity: 0.9;
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.95;
+  }
+
+  55% {
+    opacity: 0.85;
+  }
+
+  60% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.98;
+  }
+}
+
+.animate-tv-on {
+  animation:
+    tv-turn-on-x 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards,
+    tv-turn-on-y 0.4s cubic-bezier(0.23, 1, 0.32, 1) 0.3s forwards,
+    crt-flicker 2s infinite 0.7s;
+  transform: scaleX(0.005) scaleY(0.005);
+  transform-origin: center;
+  opacity: 0;
+  /* Start hidden until opacity:1 in keyframe */
+}
+
+/* TV Turn Off Animation */
+@keyframes tv-turn-off {
+  0% {
+    transform: scale(1, 1);
+    opacity: 1;
+    filter: brightness(1);
+  }
+
+  50% {
+    transform: scale(1.1, 0.01);
+    opacity: 1;
+    filter: brightness(3);
+  }
+
+  80% {
+    transform: scale(0.01, 0.01);
+    opacity: 1;
+    filter: brightness(5);
+  }
+
+  100% {
+    transform: scale(0, 0);
+    opacity: 0;
+    filter: brightness(0);
+  }
+}
+
+.animate-tv-off {
+  animation: tv-turn-off 0.4s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards;
+  transform-origin: center;
+}
+
+/* Rugged Border Utility */
+.rugged-border {
+  position: relative;
+  border: 6px solid #18181b;
+  /* zinc-900 */
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
+}
+
+.rugged-border::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid #00ff41;
+  /* Neon Green */
+  border-radius: 6px;
+  pointer-events: none;
+  box-shadow: 0 0 10px rgba(0, 255, 65, 0.1);
+}
+
+/* Corner Bolts */
+.corner-bolt {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #27272a;
+  /* zinc-800 */
+  border: 1px solid #3f3f46;
+  /* zinc-700 */
+  border-radius: 50%;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.8), 0 1px 1px rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+.corner-bolt::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  background: #09090b;
+  /* zinc-950 */
+  border-radius: 50%;
+  opacity: 0.7;
+}
+
+/* Deep Glassmorphism */
+.deep-glass {
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/* HUD Button Clip Path */
+.clip-path-hud-btn {
+  clip-path: polygon(10px 0, 100% 0,
+      100% calc(100% - 10px), calc(100% - 10px) 100%,
+      0 100%, 0 10px);
+}
+
+/* Tablet Clip Path */
+.clip-path-tablet {
+  clip-path: polygon(20px 0, 100% 0,
+      100% calc(100% - 20px), calc(100% - 20px) 100%,
+      20px 100%, 0 calc(100% - 20px), 0 20px);
+}
+
+canvas {
+  display: block;
+  outline: none;
+}
+
+/* ========================================
+   MILITARY WARFARE UI - ANIMATIONS
+   ======================================== */
+
+/* Glitch Effect Animation */
+@keyframes glitch {
+  0% {
+    clip-path: inset(40% 0 61% 0);
+    transform: translate(-2px, 2px);
+  }
+
+  10% {
+    clip-path: inset(92% 0 1% 0);
+    transform: translate(3px, -1px);
+  }
+
+  20% {
+    clip-path: inset(43% 0 1% 0);
+    transform: translate(-1px, 1px);
+  }
+
+  30% {
+    clip-path: inset(25% 0 58% 0);
+    transform: translate(2px, 0px);
+  }
+
+  40% {
+    clip-path: inset(54% 0 7% 0);
+    transform: translate(-2px, -1px);
+  }
+
+  50% {
+    clip-path: inset(58% 0 43% 0);
+    transform: translate(1px, 2px);
+  }
+
+  60% {
+    clip-path: inset(45% 0 56% 0);
+    transform: translate(0px, -1px);
+  }
+
+  70% {
+    clip-path: inset(10% 0 80% 0);
+    transform: translate(-1px, 1px);
+  }
+
+  80% {
+    clip-path: inset(0% 0 100% 0);
+    transform: translate(1px, 0px);
+  }
+
+  90% {
+    clip-path: inset(0% 0 0% 0);
+    transform: translate(0px, 0px);
+  }
+
+  100% {
+    clip-path: inset(0% 0 0% 0);
+    transform: translate(0px, 0px);
+  }
+}
+
+@keyframes glitch-skew {
+  0% {
+    transform: skewX(0deg);
+  }
+
+  10% {
+    transform: skewX(-1deg);
+  }
+
+  20% {
+    transform: skewX(2deg);
+  }
+
+  30% {
+    transform: skewX(-0.5deg);
+  }
+
+  40% {
+    transform: skewX(1deg);
+  }
+
+  50% {
+    transform: skewX(0deg);
+  }
+
+  100% {
+    transform: skewX(0deg);
+  }
+}
+
+/* Scan Line Animation */
+@keyframes scan-line {
+  0% {
+    top: -10%;
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    top: 110%;
+    opacity: 0;
+  }
+}
+
+/* Diagnostic Pulse Animation */
+@keyframes diagnostic-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 5px rgba(0, 255, 65, 0.3);
+    border-color: rgba(0, 255, 65, 0.5);
+  }
+
+  50% {
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.6), inset 0 0 10px rgba(0, 255, 65, 0.1);
+    border-color: rgba(0, 255, 65, 0.8);
+  }
+}
+
+/* Wallet Button Glow */
+@keyframes wallet-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.4), inset 0 0 5px rgba(0, 255, 65, 0.1);
+  }
+
+  50% {
+    box-shadow: 0 0 30px rgba(0, 255, 65, 0.7), 0 0 60px rgba(0, 255, 65, 0.3), inset 0 0 10px rgba(0, 255, 65, 0.2);
+  }
+}
+
+/* Data Stream Background */
+@keyframes data-stream {
+  0% {
+    background-position: 0% 0%;
+  }
+
+  100% {
+    background-position: 0% 100%;
+  }
+}
+
+/* Blink Animation */
+@keyframes blink-indicator {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* ========================================
+   MILITARY WARFARE UI - COMPONENTS
+   ======================================== */
+
+/* Warfare Modal Container */
+.warfare-modal {
+  animation: glitch-skew 0.5s ease-out forwards;
+}
+
+.warfare-modal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+      transparent 0%,
+      rgba(0, 255, 65, 0.03) 50%,
+      transparent 100%);
+  animation: scan-line 3s linear infinite;
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* Glitch Text Effect */
+.glitch-text {
+  position: relative;
+}
+
+.glitch-text::before,
+.glitch-text::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.glitch-text::before {
+  left: 2px;
+  text-shadow: -2px 0 #ff0000;
+  animation: glitch 0.8s infinite linear alternate-reverse;
+  clip-path: inset(0 0 0 0);
+}
+
+.glitch-text::after {
+  left: -2px;
+  text-shadow: 2px 0 #00ffff;
+  animation: glitch 0.6s infinite linear alternate-reverse;
+  animation-delay: 0.1s;
+}
+
+/* Warfare Button */
+.warfare-btn {
+  position: relative;
+  background: linear-gradient(135deg, rgba(0, 255, 65, 0.1) 0%, rgba(0, 20, 10, 0.9) 100%);
+  border: 1px solid rgba(0, 255, 65, 0.5);
+  color: #00ff41;
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 12px 24px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+
+.warfare-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.warfare-btn:hover::before {
+  left: 100%;
+}
+
+.warfare-btn:hover {
+  box-shadow: 0 0 30px rgba(0, 255, 65, 0.5), inset 0 0 20px rgba(0, 255, 65, 0.1);
+  border-color: #00ff41;
+}
+
+.warfare-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 0 10px rgba(0, 255, 65, 0.8);
+}
+
+/* Diagnostic Container */
+.diagnostic-container {
+  animation: diagnostic-pulse 2s infinite ease-in-out;
+}
+
+/* Locked Button State */
+.locked-btn {
+  background: linear-gradient(135deg, rgba(100, 100, 100, 0.2) 0%, rgba(30, 30, 30, 0.9) 100%);
+  border: 1px solid rgba(100, 100, 100, 0.4);
+  color: #666;
+  cursor: not-allowed;
+  position: relative;
+  overflow: hidden;
+}
+
+.locked-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(45deg,
+      transparent,
+      transparent 10px,
+      rgba(0, 0, 0, 0.1) 10px,
+      rgba(0, 0, 0, 0.1) 20px);
+  pointer-events: none;
+}
+
+/* Tactical Wallet Button */
+.tactical-wallet-btn {
+  animation: wallet-glow 2s infinite ease-in-out !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.tactical-wallet-btn::before {
+  content: '' !important;
+  position: absolute !important;
+  top: -50% !important;
+  left: -50% !important;
+  width: 200% !important;
+  height: 200% !important;
+  background: conic-gradient(from 0deg,
+      transparent 0deg,
+      rgba(0, 255, 65, 0.4) 60deg,
+      transparent 120deg) !important;
+  animation: rotate-glow 3s linear infinite !important;
+  z-index: -1 !important;
+}
+
+@keyframes rotate-glow {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Status Indicator */
+.status-indicator {
+  animation: blink-indicator 1.5s infinite;
+}
+
+/* ========================================
+   CYBERPUNK HOLOGRAPHIC BEZEL FRAME
+   ======================================== */
+
+/* Hologram Shimmer Animation */
+@keyframes hologram-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes hologram-flicker {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  92% {
+    opacity: 1;
+  }
+
+  93% {
+    opacity: 0.8;
+  }
+
+  94% {
+    opacity: 1;
+  }
+
+  95% {
+    opacity: 0.9;
+  }
+
+  96% {
+    opacity: 1;
+  }
+}
+
+@keyframes corner-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41;
+  }
+
+  50% {
+    box-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41, 0 0 30px #00ff41;
+  }
+}
+
+@keyframes grid-scroll {
+  0% {
+    background-position: 0 0;
+  }
+
+  100% {
+    background-position: 0 50px;
+  }
+}
+
+/* Holographic Bezel Container */
+.holo-bezel {
+  position: relative;
+  animation: hologram-flicker 4s infinite;
+}
+
+/* Outer Holographic Glow Frame */
+.holo-bezel::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(0, 255, 65, 0.1) 25%,
+      rgba(0, 255, 65, 0.3) 50%,
+      rgba(0, 255, 65, 0.1) 75%,
+      transparent 100%);
+  background-size: 200% 100%;
+  animation: hologram-shimmer 3s linear infinite;
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(4px);
+}
+
+/* Grid Pattern Background */
+.holo-bezel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    /* Vertical lines */
+    repeating-linear-gradient(90deg,
+      transparent,
+      transparent 49px,
+      rgba(0, 255, 65, 0.03) 49px,
+      rgba(0, 255, 65, 0.03) 50px),
+    /* Horizontal lines */
+    repeating-linear-gradient(0deg,
+      transparent,
+      transparent 49px,
+      rgba(0, 255, 65, 0.03) 49px,
+      rgba(0, 255, 65, 0.03) 50px);
+  animation: grid-scroll 10s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Cyberpunk Frame Border */
+.cyber-frame {
+  position: relative;
+  border: 2px solid rgba(0, 255, 65, 0.6);
+  background: rgba(0, 10, 5, 0.85);
+  backdrop-filter: blur(20px);
+  box-shadow:
+    /* Inner glow */
+    inset 0 0 30px rgba(0, 255, 65, 0.1),
+    /* Outer glow */
+    0 0 20px rgba(0, 255, 65, 0.3),
+    0 0 40px rgba(0, 255, 65, 0.1);
+}
+
+/* Corner Brackets - Top Left */
+.cyber-corner-tl::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  width: 30px;
+  height: 30px;
+  border-top: 3px solid #00ff41;
+  border-left: 3px solid #00ff41;
+  animation: corner-pulse 2s infinite;
+  z-index: 100;
+}
+
+/* Corner Brackets - Top Right */
+.cyber-corner-tr::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 30px;
+  height: 30px;
+  border-top: 3px solid #00ff41;
+  border-right: 3px solid #00ff41;
+  animation: corner-pulse 2s infinite 0.5s;
+  z-index: 100;
+}
+
+/* Corner Brackets - Bottom */
+.cyber-corner-bl {
+  position: relative;
+}
+
+.cyber-corner-bl::before {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: -2px;
+  width: 30px;
+  height: 30px;
+  border-bottom: 3px solid #00ff41;
+  border-left: 3px solid #00ff41;
+  animation: corner-pulse 2s infinite 1s;
+  z-index: 100;
+}
+
+.cyber-corner-br::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 30px;
+  height: 30px;
+  border-bottom: 3px solid #00ff41;
+  border-right: 3px solid #00ff41;
+  animation: corner-pulse 2s infinite 1.5s;
+  z-index: 100;
+}
+
+/* Holographic Edge Lines */
+.holo-edge-top {
+  position: relative;
+}
+
+.holo-edge-top::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 2px;
+  background: linear-gradient(90deg,
+      transparent,
+      #00ff41 20%,
+      #4fffa0 50%,
+      #00ff41 80%,
+      transparent);
+  box-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41;
+  z-index: 100;
+}
+
+.holo-edge-bottom::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 2px;
+  background: linear-gradient(90deg,
+      transparent,
+      #00ff41 20%,
+      #4fffa0 50%,
+      #00ff41 80%,
+      transparent);
+  box-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41;
+  z-index: 100;
+}
+
+/* Side Edge Markers */
+.holo-markers::before,
+.holo-markers::after {
+  content: '';
+  position: absolute;
+  width: 3px;
+  height: 40px;
+  background: linear-gradient(180deg,
+      transparent,
+      #00ff41 30%,
+      #00ff41 70%,
+      transparent);
+  box-shadow: 0 0 8px #00ff41;
+  z-index: 100;
+}
+
+.holo-markers::before {
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.holo-markers::after {
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Full Cyberpunk Modal */
+.cyberpunk-modal {
+  position: relative;
+  background:
+    /* Scanline overlay */
+    repeating-linear-gradient(0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 255, 65, 0.02) 2px,
+      rgba(0, 255, 65, 0.02) 4px),
+    /* Base gradient */
+    linear-gradient(135deg,
+      rgba(0, 20, 10, 0.95) 0%,
+      rgba(0, 10, 5, 0.98) 50%,
+      rgba(0, 20, 15, 0.95) 100%);
+  border: 1px solid rgba(0, 255, 65, 0.4);
+  box-shadow:
+    /* Multiple glow layers for 3D depth */
+    0 0 2px #00ff41,
+    0 0 10px rgba(0, 255, 65, 0.5),
+    0 0 30px rgba(0, 255, 65, 0.2),
+    0 0 60px rgba(0, 255, 65, 0.1),
+    /* Inner shadow for depth */
+    inset 0 0 50px rgba(0, 255, 65, 0.05),
+    inset 0 2px 0 rgba(0, 255, 65, 0.1);
+  backdrop-filter: blur(20px);
+  animation: hologram-flicker 5s infinite;
+}
+
+/* Holographic 3D Depth Effect */
+.holo-3d {
+  position: relative;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.holo-3d::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border: 1px solid rgba(0, 255, 65, 0.15);
+  transform: translateZ(-10px);
+  pointer-events: none;
+}
+
+.holo-3d::after {
+  content: '';
+  position: absolute;
+  inset: -16px;
+  border: 1px solid rgba(0, 255, 65, 0.08);
+  transform: translateZ(-20px);
+  pointer-events: none;
+}
+
+/* Yellow/Cyan Accent Variant (like Cyberpunk 2077) */
+.cyber-accent-yellow {
+  --cyber-primary: #f0e040;
+  --cyber-secondary: #e8d838;
+  border-color: rgba(240, 224, 64, 0.6);
+  box-shadow:
+    0 0 10px rgba(240, 224, 64, 0.4),
+    0 0 30px rgba(240, 224, 64, 0.2);
+}
+
+.cyber-accent-cyan {
+  --cyber-primary: #00d4ff;
+  --cyber-secondary: #00b4d8;
+  border-color: rgba(0, 212, 255, 0.6);
+  box-shadow:
+    0 0 10px rgba(0, 212, 255, 0.4),
+    0 0 30px rgba(0, 212, 255, 0.2);
+}
+
+/* Wallet Adapter Override for Cyberpunk Style */
+.wallet-adapter-modal-wrapper {
+  background: rgba(0, 10, 5, 0.95) !important;
+}
+
+.wallet-adapter-modal {
+  background:
+    repeating-linear-gradient(0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 255, 65, 0.02) 2px,
+      rgba(0, 255, 65, 0.02) 4px),
+    linear-gradient(135deg,
+      rgba(0, 20, 10, 0.98) 0%,
+      rgba(0, 10, 5, 0.99) 100%) !important;
+  border: 2px solid rgba(0, 255, 65, 0.5) !important;
+  box-shadow:
+    0 0 2px #00ff41,
+    0 0 10px rgba(0, 255, 65, 0.5),
+    0 0 30px rgba(0, 255, 65, 0.2),
+    0 0 60px rgba(0, 255, 65, 0.1) !important;
+  animation: hologram-flicker 5s infinite !important;
+}
+
+.wallet-adapter-modal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 2px;
+  background: linear-gradient(90deg,
+      transparent,
+      #00ff41 20%,
+      #4fffa0 50%,
+      #00ff41 80%,
+      transparent);
+  box-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41;
+}
+
+.wallet-adapter-modal-title {
+  color: #00ff41 !important;
+  font-family: 'Orbitron', monospace !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  text-shadow: 0 0 10px rgba(0, 255, 65, 0.5) !important;
+}
+
+.wallet-adapter-modal-list {
+  background: transparent !important;
+}
+
+.wallet-adapter-modal-list li {
+  background: rgba(0, 255, 65, 0.05) !important;
+  border: 1px solid rgba(0, 255, 65, 0.2) !important;
+  transition: all 0.3s ease !important;
+}
+
+.wallet-adapter-modal-list li:hover {
+  background: rgba(0, 255, 65, 0.15) !important;
+  border-color: rgba(0, 255, 65, 0.5) !important;
+  box-shadow: 0 0 15px rgba(0, 255, 65, 0.3) !important;
+}
+
+/* ========================================
+   Wallet Button Override - Match Theme
+   ======================================== */
+.wallet-adapter-button {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 1px solid #4fffa0 !important;
+  color: #4fffa0 !important;
+  border-radius: 6px !important;
+  transition: all 0.3s ease !important;
+}
+
+.wallet-adapter-button:hover,
+.wallet-adapter-button:focus {
+  background: #4fffa0 !important;
+  background-color: #4fffa0 !important;
+  color: black !important;
+}
+
+.wallet-adapter-button:not([disabled]):hover {
+  background: #4fffa0 !important;
+  color: black !important;
+}

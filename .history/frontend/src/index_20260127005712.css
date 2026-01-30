@@ -1,0 +1,562 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-color: #0a0a0c;
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a0a0;
+  --accent-green: #00ff41;
+  --accent-red: #ff3333;
+  --glass-bg: rgba(20, 20, 25, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --font-mono: 'Courier New', Courier, monospace;
+}
+
+.font-orbitron {
+  font-family: 'Orbitron', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Background Drone Swarm Layer */
+.drone-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  /* Option 1: Generated Image with Slow Pan */
+  background: linear-gradient(to bottom, rgba(0, 20, 30, 0.4), #0a0a0c),
+    url('/bg-drone-v2.png');
+  background-size: 110%;
+  /* Slightly larger for movement */
+  background-position: center;
+  opacity: 1;
+  animation: bg-pan 20s ease-in-out infinite alternate;
+}
+
+@keyframes bg-pan {
+  from {
+    background-position: 50% 50%;
+  }
+
+  to {
+    background-position: 50% 45%;
+  }
+}
+
+/* Atmospheric Fog Layer */
+.fog-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 100%, rgba(0, 255, 65, 0.05), transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+  animation: fog-pulse 8s infinite alternate;
+}
+
+@keyframes fog-pulse {
+  from {
+    opacity: 0.3;
+  }
+
+  to {
+    opacity: 0.7;
+  }
+}
+
+/* Container */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* --- TV Turn On Animation Refined --- */
+@keyframes tv-turn-on-y {
+  0% {
+    transform: scaleY(0.005);
+    opacity: 0;
+  }
+
+  60% {
+    transform: scaleY(0.005);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes tv-turn-on-x {
+  0% {
+    transform: scaleX(0.005);
+  }
+
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes crt-flicker {
+  0% {
+    opacity: 0.95;
+  }
+
+  5% {
+    opacity: 0.8;
+  }
+
+  10% {
+    opacity: 0.9;
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.95;
+  }
+
+  55% {
+    opacity: 0.85;
+  }
+
+  60% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.98;
+  }
+}
+
+.animate-tv-on {
+  animation:
+    tv-turn-on-x 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards,
+    tv-turn-on-y 0.4s cubic-bezier(0.23, 1, 0.32, 1) 0.3s forwards,
+    crt-flicker 2s infinite 0.7s;
+  transform: scaleX(0.005) scaleY(0.005);
+  transform-origin: center;
+  opacity: 0;
+  /* Start hidden until opacity:1 in keyframe */
+}
+
+/* Rugged Border Utility */
+.rugged-border {
+  position: relative;
+  border: 6px solid #18181b;
+  /* zinc-900 */
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
+}
+
+.rugged-border::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid #00ff41;
+  /* Neon Green */
+  border-radius: 6px;
+  pointer-events: none;
+  box-shadow: 0 0 10px rgba(0, 255, 65, 0.1);
+}
+
+/* Corner Bolts */
+.corner-bolt {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #27272a;
+  /* zinc-800 */
+  border: 1px solid #3f3f46;
+  /* zinc-700 */
+  border-radius: 50%;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.8), 0 1px 1px rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+.corner-bolt::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  background: #09090b;
+  /* zinc-950 */
+  border-radius: 50%;
+  opacity: 0.7;
+}
+
+/* Deep Glassmorphism */
+.deep-glass {
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/* HUD Button Clip Path */
+.clip-path-hud-btn {
+  clip-path: polygon(10px 0, 100% 0,
+      100% calc(100% - 10px), calc(100% - 10px) 100%,
+      0 100%, 0 10px);
+}
+
+/* Tablet Clip Path */
+.clip-path-tablet {
+  clip-path: polygon(20px 0, 100% 0,
+      100% calc(100% - 20px), calc(100% - 20px) 100%,
+      20px 100%, 0 calc(100% - 20px), 0 20px);
+}
+
+canvas {
+  display: block;
+  outline: none;
+}
+
+/* ========================================
+   MILITARY WARFARE UI - ANIMATIONS
+   ======================================== */
+
+/* Glitch Effect Animation */
+@keyframes glitch {
+  0% {
+    clip-path: inset(40% 0 61% 0);
+    transform: translate(-2px, 2px);
+  }
+
+  10% {
+    clip-path: inset(92% 0 1% 0);
+    transform: translate(3px, -1px);
+  }
+
+  20% {
+    clip-path: inset(43% 0 1% 0);
+    transform: translate(-1px, 1px);
+  }
+
+  30% {
+    clip-path: inset(25% 0 58% 0);
+    transform: translate(2px, 0px);
+  }
+
+  40% {
+    clip-path: inset(54% 0 7% 0);
+    transform: translate(-2px, -1px);
+  }
+
+  50% {
+    clip-path: inset(58% 0 43% 0);
+    transform: translate(1px, 2px);
+  }
+
+  60% {
+    clip-path: inset(45% 0 56% 0);
+    transform: translate(0px, -1px);
+  }
+
+  70% {
+    clip-path: inset(10% 0 80% 0);
+    transform: translate(-1px, 1px);
+  }
+
+  80% {
+    clip-path: inset(0% 0 100% 0);
+    transform: translate(1px, 0px);
+  }
+
+  90% {
+    clip-path: inset(0% 0 0% 0);
+    transform: translate(0px, 0px);
+  }
+
+  100% {
+    clip-path: inset(0% 0 0% 0);
+    transform: translate(0px, 0px);
+  }
+}
+
+@keyframes glitch-skew {
+  0% {
+    transform: skewX(0deg);
+  }
+
+  10% {
+    transform: skewX(-1deg);
+  }
+
+  20% {
+    transform: skewX(2deg);
+  }
+
+  30% {
+    transform: skewX(-0.5deg);
+  }
+
+  40% {
+    transform: skewX(1deg);
+  }
+
+  50% {
+    transform: skewX(0deg);
+  }
+
+  100% {
+    transform: skewX(0deg);
+  }
+}
+
+/* Scan Line Animation */
+@keyframes scan-line {
+  0% {
+    top: -10%;
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    top: 110%;
+    opacity: 0;
+  }
+}
+
+/* Diagnostic Pulse Animation */
+@keyframes diagnostic-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 5px rgba(0, 255, 65, 0.3);
+    border-color: rgba(0, 255, 65, 0.5);
+  }
+
+  50% {
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.6), inset 0 0 10px rgba(0, 255, 65, 0.1);
+    border-color: rgba(0, 255, 65, 0.8);
+  }
+}
+
+/* Wallet Button Glow */
+@keyframes wallet-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.4), inset 0 0 5px rgba(0, 255, 65, 0.1);
+  }
+
+  50% {
+    box-shadow: 0 0 30px rgba(0, 255, 65, 0.7), 0 0 60px rgba(0, 255, 65, 0.3), inset 0 0 10px rgba(0, 255, 65, 0.2);
+  }
+}
+
+/* Data Stream Background */
+@keyframes data-stream {
+  0% {
+    background-position: 0% 0%;
+  }
+
+  100% {
+    background-position: 0% 100%;
+  }
+}
+
+/* Blink Animation */
+@keyframes blink-indicator {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* ========================================
+   MILITARY WARFARE UI - COMPONENTS
+   ======================================== */
+
+/* Warfare Modal Container */
+.warfare-modal {
+  animation: glitch-skew 0.5s ease-out forwards;
+}
+
+.warfare-modal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+      transparent 0%,
+      rgba(0, 255, 65, 0.03) 50%,
+      transparent 100%);
+  animation: scan-line 3s linear infinite;
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* Glitch Text Effect */
+.glitch-text {
+  position: relative;
+}
+
+.glitch-text::before,
+.glitch-text::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.glitch-text::before {
+  left: 2px;
+  text-shadow: -2px 0 #ff0000;
+  animation: glitch 0.8s infinite linear alternate-reverse;
+  clip-path: inset(0 0 0 0);
+}
+
+.glitch-text::after {
+  left: -2px;
+  text-shadow: 2px 0 #00ffff;
+  animation: glitch 0.6s infinite linear alternate-reverse;
+  animation-delay: 0.1s;
+}
+
+/* Warfare Button */
+.warfare-btn {
+  position: relative;
+  background: linear-gradient(135deg, rgba(0, 255, 65, 0.1) 0%, rgba(0, 20, 10, 0.9) 100%);
+  border: 1px solid rgba(0, 255, 65, 0.5);
+  color: #00ff41;
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 12px 24px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+
+.warfare-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.warfare-btn:hover::before {
+  left: 100%;
+}
+
+.warfare-btn:hover {
+  box-shadow: 0 0 30px rgba(0, 255, 65, 0.5), inset 0 0 20px rgba(0, 255, 65, 0.1);
+  border-color: #00ff41;
+}
+
+.warfare-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 0 10px rgba(0, 255, 65, 0.8);
+}
+
+/* Diagnostic Container */
+.diagnostic-container {
+  animation: diagnostic-pulse 2s infinite ease-in-out;
+}
+
+/* Locked Button State */
+.locked-btn {
+  background: linear-gradient(135deg, rgba(100, 100, 100, 0.2) 0%, rgba(30, 30, 30, 0.9) 100%);
+  border: 1px solid rgba(100, 100, 100, 0.4);
+  color: #666;
+  cursor: not-allowed;
+  position: relative;
+  overflow: hidden;
+}
+
+.locked-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(45deg,
+      transparent,
+      transparent 10px,
+      rgba(0, 0, 0, 0.1) 10px,
+      rgba(0, 0, 0, 0.1) 20px);
+  pointer-events: none;
+}
+
+/* Tactical Wallet Button */
+.tactical-wallet-btn {
+  animation: wallet-glow 2s infinite ease-in-out !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.tactical-wallet-btn::before {
+  content: '' !important;
+  position: absolute !important;
+  top: -50% !important;
+  left: -50% !important;
+  width: 200% !important;
+  height: 200% !important;
+  background: conic-gradient(from 0deg,
+      transparent 0deg,
+      rgba(0, 255, 65, 0.4) 60deg,
+      transparent 120deg) !important;
+  animation: rotate-glow 3s linear infinite !important;
+  z-index: -1 !important;
+}
+
+@keyframes rotate-glow {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Status Indicator */
+.status-indicator {
+  animation: blink-indicator 1.5s infinite;
+}

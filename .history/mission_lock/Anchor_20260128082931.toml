@@ -1,0 +1,21 @@
+[toolchain]
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.localnet]
+mission_lock = "CCWcSMHxXzuEKzpX6KHDrwST28pPqvxwkvZmM1b1Pt8Q"
+
+[programs.devnet]
+mission_lock = "CCWcSMHxXzuEKzpX6KHDrwST28pPqvxwkvZmM1b1Pt8Q"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "Devnet"
+wallet = "~/.config/solana/devnet-wallet.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
