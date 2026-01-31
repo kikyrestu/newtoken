@@ -39,20 +39,14 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             <div className="flex items-center justify-between">
                 {/* Logo */}
                 <div className="flex items-center gap-2">
-                    <div className="relative">
-                        <div className="w-8 h-8 rounded border border-[#00ff41]/50 bg-black/50 
-                            flex items-center justify-center backdrop-blur-sm">
-                            <div className="w-3 h-3 bg-[#00ff41] rounded-sm animate-pulse" />
-                        </div>
-                        {/* Corner accents */}
-                        <div className="absolute -top-0.5 -left-0.5 w-2 h-2 border-t border-l border-[#00ff41]" />
-                        <div className="absolute -top-0.5 -right-0.5 w-2 h-2 border-t border-r border-[#00ff41]" />
-                        <div className="absolute -bottom-0.5 -left-0.5 w-2 h-2 border-b border-l border-[#00ff41]" />
-                        <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 border-b border-r border-[#00ff41]" />
-                    </div>
+                    <img
+                        src="/logo.png"
+                        alt="Mission Launchpad"
+                        className="w-10 h-10 object-contain"
+                    />
                     <div className="font-mono">
-                        <div className="text-[#00ff41] text-xs font-bold tracking-wider">DEFENSE</div>
-                        <div className="text-[#00ff41]/70 text-[10px] tracking-widest">PROTOCOL</div>
+                        <div className="text-[#00ff41] text-xs font-bold tracking-wider">MISSION</div>
+                        <div className="text-[#00ff41]/70 text-[10px] tracking-widest">LAUNCHPAD</div>
                     </div>
                 </div>
 
