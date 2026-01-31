@@ -233,8 +233,8 @@ class LockController extends Controller
      */
     public function getUserDashboard(string $wallet): JsonResponse
     {
-        // Validate wallet format (basic check)
-        if (strlen($wallet) !== 44) {
+        // Validate wallet format (Solana addresses are 43-44 chars base58)
+        if (strlen($wallet) < 43 || strlen($wallet) > 44) {
             return response()->json([
                 'success' => false,
                 'error' => 'Invalid wallet address format'

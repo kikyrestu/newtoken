@@ -7,8 +7,6 @@ import { useLockProgram, TIERS } from '../hooks/useLockProgram';
 import type { TierType } from '../hooks/useLockProgram';
 import { useTokenPrice } from '../hooks/useTokenPrice';
 
-// Demo Mode - skip balance checks for UI testing
-const DEMO_MODE = import.meta.env.VITE_ENABLE_DEMO_MODE === 'true';
 
 interface MissionTierCardProps {
     tier: TierType;
@@ -73,18 +71,16 @@ export const MissionTierCard: React.FC<MissionTierCardProps> = ({
         try {
             const requiredAmount = BigInt(tierPricing.tokens);
 
-            // Skip balance check in Demo Mode
-            if (!DEMO_MODE) {
-                const balance = await getTokenBalance();
+            // Check actual balance
+            const balance = await getTokenBalance();
 
-                if (balance < requiredAmount) {
-                    setErrorMessage(
-                        `Insufficient balance! You need ${formatTokens(tierPricing.tokens)} tokens. ` +
-                        `Current balance: ${formatTokenAmount(balance)}`
-                    );
-                    setStatus('error');
-                    return;
-                }
+            if (balance < requiredAmount) {
+                setErrorMessage(
+                    `Insufficient balance! You need ${formatTokens(tierPricing.tokens)} tokens. ` +
+                    `Current balance: ${formatTokenAmount(balance)}`
+                );
+                setStatus('error');
+                return;
             }
 
             // 4. Execute lock

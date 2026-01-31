@@ -16,29 +16,30 @@ import {
 import { useCallback, useState } from 'react';
 
 // ============================================================================
-// CONFIGURATION - Dynamic from Admin Dashboard or Environment
+// CONFIGURATION - Dynamic from Admin Dashboard
 // ============================================================================
-
-// Demo Mode Configuration
-// Set VITE_ENABLE_DEMO_MODE=true in .env to test UI without blockchain
-const DEMO_MODE = import.meta.env.VITE_ENABLE_DEMO_MODE === 'true';
 
 // Backend API URL
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 // Default values from env (used as fallback)
-const DEFAULT_PROGRAM_ID = import.meta.env.VITE_PROGRAM_ID || '11111111111111111111111111111111';
-const DEFAULT_TOKEN_MINT = import.meta.env.VITE_TOKEN_MINT || '11111111111111111111111111111111';
+const DEFAULT_PROGRAM_ID = import.meta.env.VITE_PROGRAM_ID || '';
+const DEFAULT_TOKEN_MINT = import.meta.env.VITE_TOKEN_MINT || '';
+const DEFAULT_TREASURY = import.meta.env.VITE_TREASURY_WALLET || '';
 
 // Cache for dynamic config
-let cachedConfig: { programId: string; tokenMint: string; decimals: number } | null = null;
+let cachedConfig: { programId: string; tokenMint: string; decimals: number; treasuryWallet: string } | null = null;
 let configLastFetched = 0;
 const CONFIG_CACHE_TTL = 60000; // 1 minute
+
+// Unlock availability - set to false until smart contract is deployed
+// This prevents users from attempting unlock transactions that would fail
+export const UNLOCK_ENABLED = false;
 
 /**
  * Fetch blockchain config from backend
  */
-async function fetchBlockchainConfig(): Promise<{ programId: string; tokenMint: string; decimals: number }> {
+async function fetchBlockchainConfig(): Promise<{ programId: string; tokenMint: string; decimals: number; treasuryWallet: string }> {
     const now = Date.now();
 
     // Return cached if still valid
@@ -57,41 +58,46 @@ async function fetchBlockchainConfig(): Promise<{ programId: string; tokenMint: 
                 cachedConfig = {
                     programId: data.value.program_id || DEFAULT_PROGRAM_ID,
                     tokenMint: data.value.token_mint || DEFAULT_TOKEN_MINT,
-                    decimals: data.value.token_decimals || 6
+                    decimals: data.value.token_decimals || 9,
+                    treasuryWallet: data.value.treasury_wallet || DEFAULT_TREASURY
                 };
                 configLastFetched = now;
                 return cachedConfig;
             }
         }
     } catch (err) {
-        console.debug('[useLockProgram] Failed to fetch config, using defaults');
+        console.debug('[useLockProgram] Failed to fetch config, using env defaults');
     }
 
-    // Return defaults
+    // Return defaults from environment
     return {
         programId: DEFAULT_PROGRAM_ID,
         tokenMint: DEFAULT_TOKEN_MINT,
-        decimals: 6
+        decimals: 9,
+        treasuryWallet: DEFAULT_TREASURY
     };
 }
 
-// Initialize with defaults, will be updated dynamically
-let PROGRAM_ID = new PublicKey(DEFAULT_PROGRAM_ID);
-let TOKEN_MINT = new PublicKey(DEFAULT_TOKEN_MINT);
-export let TOKEN_DECIMALS = 6;
+// Initialize with System Program (will be updated dynamically)
+let PROGRAM_ID = new PublicKey('11111111111111111111111111111111');
+let TOKEN_MINT = new PublicKey('11111111111111111111111111111111');
+let TREASURY_WALLET = new PublicKey('11111111111111111111111111111111');
+export let TOKEN_DECIMALS = 9;
 
 // Fetch config on module load (non-blocking)
 fetchBlockchainConfig().then(config => {
     try {
-        PROGRAM_ID = new PublicKey(config.programId);
-        TOKEN_MINT = new PublicKey(config.tokenMint);
+        if (config.programId) PROGRAM_ID = new PublicKey(config.programId);
+        if (config.tokenMint) TOKEN_MINT = new PublicKey(config.tokenMint);
+        if (config.treasuryWallet) TREASURY_WALLET = new PublicKey(config.treasuryWallet);
         TOKEN_DECIMALS = config.decimals;
         console.log('[useLockProgram] Config loaded:', {
-            programId: config.programId.slice(0, 8) + '...',
-            tokenMint: config.tokenMint.slice(0, 8) + '...'
+            programId: config.programId ? config.programId.slice(0, 8) + '...' : 'not set',
+            tokenMint: config.tokenMint ? config.tokenMint.slice(0, 8) + '...' : 'not set',
+            treasuryWallet: config.treasuryWallet ? config.treasuryWallet.slice(0, 8) + '...' : 'not set'
         });
     } catch (err) {
-        console.error('[useLockProgram] Invalid config addresses');
+        console.error('[useLockProgram] Invalid config addresses:', err);
     }
 }).catch(() => { });
 
@@ -190,9 +196,6 @@ export function useLockProgram() {
      * Check if user has sufficient balance for a tier
      */
     const hasSufficientBalance = useCallback(async (requiredAmount: bigint): Promise<boolean> => {
-        // In Demo Mode, always return true
-        if (DEMO_MODE) return true;
-
         const balance = await getTokenBalance();
         return balance >= requiredAmount;
     }, [getTokenBalance]);
@@ -221,26 +224,6 @@ export function useLockProgram() {
         setError(null);
 
         try {
-            // --- DEMO MODE BLOCK ---
-            if (DEMO_MODE) {
-                console.log('🔵 DEMO MODE: Simulating Lock Transaction...');
-                await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate network delay
-
-                // Simulate success
-                const mockSignature = '5P3g...DEMO_MODE_SIGNATURE...' + Date.now();
-                const [escrowPDA] = getEscrowPDA(publicKey);
-
-                // Call backend mock verify if needed, or just return success (or could call backend if backend supports demo)
-
-                console.log('🟢 DEMO MODE: Lock Successful!');
-                return {
-                    signature: mockSignature,
-                    escrowPda: escrowPDA.toBase58(),
-                    // Default 30 days unlock
-                    unlockTimestamp: new Date(Date.now() + TIERS[tier].durationDays * 86400000).toISOString()
-                };
-            }
-            // -----------------------
 
             if (!signTransaction) {
                 throw new Error('Wallet does not support signing');
@@ -265,18 +248,16 @@ export function useLockProgram() {
             // 4. Build transaction
             const tx = new Transaction();
 
-            // 5. Check if escrow token account needs creation
-            // Only needed for real program lock
+            // 5. Determine destination - Treasury (transfer mode) or Escrow PDA (program mode)
             let destinationTokenAccount;
             const isPlaceholderProgram = PROGRAM_ID.toBase58() === '11111111111111111111111111111111';
 
-            // TREASURY WALLET (CLI Wallet used as temporary lock vault)
-            const TREASURY_WALLET = new PublicKey('4F2ZKTcBLQwKbsBAHEHs2GFDibD7s4JX9ChYoaS9gr8C');
-
-            if (isPlaceholderProgram) {
-                // --- FALLBACK: TRANSFER MODE ---
-                // Since Anchor Program is not deployed, we simulate "Lock" by transferring to Treasury
-                console.warn('⚠️ USING TRANSFER FALLBACK (Program not deployed)');
+            // Use Treasury wallet from config (fetched from API)
+            if (isPlaceholderProgram || !PROGRAM_ID) {
+                // --- TRANSFER MODE ---
+                // Lock = Transfer tokens to Treasury wallet
+                // Unlock = Manual admin transfer back (via backend)
+                console.log('📦 TRANSFER MODE: Locking tokens to Treasury wallet');
 
                 // Get Treasury ATA
                 destinationTokenAccount = await getAssociatedTokenAddress(
