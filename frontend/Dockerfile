@@ -8,10 +8,10 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy package files (only package.json, not lockfile)
+COPY package.json ./
 
-# Install dependencies (npm install instead of ci for cross-platform compatibility)
+# Install dependencies fresh for Linux platform
 RUN npm install --legacy-peer-deps
 
 # Copy source code
