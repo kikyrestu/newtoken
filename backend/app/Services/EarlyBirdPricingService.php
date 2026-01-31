@@ -6,7 +6,7 @@ use App\Models\LockTransaction;
 
 class EarlyBirdPricingService
 {
-    private const TIERS = [
+    private const DEFAULT_TIERS = [
         'spectator' => [
             'base_price' => 25.00,
             'brackets' => [
@@ -34,11 +34,34 @@ class EarlyBirdPricingService
     ];
 
     /**
+     * Get configuration for a tier (from DB or default)
+     */
+    private function getTierConfig(string $tier): array
+    {
+        $default = self::DEFAULT_TIERS[$tier] ?? null;
+        if (!$default) return [];
+
+        try {
+            // Attempt to fetch dynamic price from SiteSettings
+            // Key format: tier_price_{tier}
+            $dynamicPrice = \App\Models\SiteSetting::get("tier_price_{$tier}");
+            
+            if ($dynamicPrice !== null && is_numeric($dynamicPrice)) {
+                $default['base_price'] = (float) $dynamicPrice;
+            }
+        } catch (\Exception $e) {
+            // Fallback to default if DB fails
+        }
+
+        return $default;
+    }
+
+    /**
      * @return array{current_price: float, original_price: float, discount_percent: int, remaining_slots_in_tier: ?int, next_price: float, locked_count: int}
      */
     public function getTierPricingDetails(string $tier): array
     {
-        $tierConfig = self::TIERS[$tier] ?? null;
+        $tierConfig = $this->getTierConfig($tier);
         if (!$tierConfig) {
             throw new \InvalidArgumentException("Invalid tier: {$tier}");
         }

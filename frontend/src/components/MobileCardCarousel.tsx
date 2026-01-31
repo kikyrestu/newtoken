@@ -78,112 +78,135 @@ export const MobileCardCarousel: React.FC<MobileCardCarouselProps> = ({ onSucces
         }
     };
 
-    return (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-30">
-            {/* Collapsed State - Swipe Up Hint */}
-            {!isExpanded && (
-                <div
-                    className="bg-gradient-to-t from-black via-black/95 to-transparent pt-8 pb-4 px-4"
-                    onTouchStart={onVerticalTouchStart}
-                    onTouchEnd={onVerticalTouchEnd}
-                >
-                    <div className="flex flex-col items-center animate-bounce">
-                        <ChevronUp className="w-6 h-6 text-[#00ff41]" />
-                        <span className="text-[#00ff41] text-xs font-medium mt-1">
-                            Swipe up to choose your role
-                        </span>
-                    </div>
+    // Expanded state swipe handling (Close on swipe down)
+    const onExpandedTouchStart = (e: TouchEvent) => {
+        setVerticalTouchStart(e.targetTouches[0].clientY);
+    };
 
-                    {/* Preview dots */}
-                    <div className="flex justify-center gap-2 mt-4">
-                        {TIERS.map((_, idx) => (
-                            <div
-                                key={idx}
-                                className={`w-2 h-2 rounded-full transition-all
-                                    ${idx === currentIndex ? 'bg-[#00ff41] w-4' : 'bg-gray-600'}`}
-                            />
-                        ))}
-                    </div>
+    const onExpandedTouchEnd = (e: TouchEvent) => {
+        if (!verticalTouchStart) return;
+        const distance = verticalTouchStart - e.changedTouches[0].clientY;
+
+        // Swipe Down (negative distance)
+        if (distance < -50) {
+            setIsExpanded(false);
+        }
+    };
+
+    return (
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 pointer-events-none">
+            {/* Collapsed State - Swipe Up Hint */}
+            <div
+                className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/95 to-transparent pt-8 pb-4 px-4 transition-all duration-500 ease-out transform pointer-events-auto
+                    ${isExpanded ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}
+                onTouchStart={onVerticalTouchStart}
+                onTouchEnd={onVerticalTouchEnd}
+            >
+                <div className="flex flex-col items-center animate-bounce">
+                    <ChevronUp className="w-6 h-6 text-[#00ff41]" />
+                    <span className="text-[#00ff41] text-xs font-medium mt-1">
+                        Swipe up to choose your role
+                    </span>
                 </div>
-            )}
+
+                {/* Preview dots */}
+                <div className="flex justify-center gap-2 mt-4">
+                    {TIERS.map((_, idx) => (
+                        <div
+                            key={idx}
+                            className={`w-2 h-2 rounded-full transition-all
+                                ${idx === currentIndex ? 'bg-[#00ff41] w-4' : 'bg-gray-600'}`}
+                        />
+                    ))}
+                </div>
+            </div>
 
             {/* Expanded State - Card Carousel */}
-            {isExpanded && (
-                <div className="bg-gradient-to-t from-black via-black/98 to-transparent">
-                    {/* Close handle */}
-                    <div
-                        className="flex justify-center py-3 cursor-pointer"
-                        onClick={() => setIsExpanded(false)}
-                    >
-                        <div className="w-12 h-1 bg-gray-600 rounded-full" />
-                    </div>
-
-                    {/* Navigation arrows + card */}
-                    <div className="relative px-2 pb-6">
-                        {/* Left arrow */}
-                        <button
-                            onClick={() => currentIndex > 0 && setCurrentIndex(currentIndex - 1)}
-                            className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2
-                                ${currentIndex === 0 ? 'text-gray-700' : 'text-[#00ff41]'}`}
-                            disabled={currentIndex === 0}
-                        >
-                            <ChevronLeft size={24} />
-                        </button>
-
-                        {/* Card container */}
-                        <div
-                            ref={containerRef}
-                            className="overflow-hidden mx-8"
-                            onTouchStart={onTouchStart}
-                            onTouchMove={onTouchMove}
-                            onTouchEnd={onTouchEnd}
-                        >
-                            <div
-                                className="flex transition-transform duration-300 ease-out"
-                                style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-                            >
-                                {TIERS.map((tier) => (
-                                    <div key={tier.tier} className="w-full flex-shrink-0 px-2">
-                                        <MissionTierCard
-                                            tier={tier.tier}
-                                            title={tier.title}
-                                            description={tier.description}
-                                            cardNumber={tier.cardNumber}
-                                            onSuccess={(sig) => onSuccess?.(tier.tier, sig)}
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Right arrow */}
-                        <button
-                            onClick={() => currentIndex < TIERS.length - 1 && setCurrentIndex(currentIndex + 1)}
-                            className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2
-                                ${currentIndex === TIERS.length - 1 ? 'text-gray-700' : 'text-[#00ff41]'}`}
-                            disabled={currentIndex === TIERS.length - 1}
-                        >
-                            <ChevronRight size={24} />
-                        </button>
-                    </div>
-
-                    {/* Dots indicator */}
-                    <div className="flex justify-center gap-3 pb-6">
-                        {TIERS.map((tier, idx) => (
-                            <button
-                                key={idx}
-                                onClick={() => setCurrentIndex(idx)}
-                                className={`transition-all duration-300 ${idx === currentIndex
-                                    ? 'bg-[#00ff41] text-black px-3 py-1 rounded-full text-xs font-bold'
-                                    : 'bg-gray-800 text-gray-400 px-2 py-1 rounded-full text-xs'
-                                    }`}
-                            >
-                                {tier.title}
-                            </button>
-                        ))}
-                    </div>
+            <div
+                className={`fixed bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/98 to-transparent transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] transform pointer-events-auto
+                    ${isExpanded ? 'translate-y-0' : 'translate-y-full'}`}
+                onTouchStart={onExpandedTouchStart}
+                onTouchEnd={onExpandedTouchEnd}
+            >
+                {/* Close handle - Increased hit area */}
+                <div
+                    className="flex justify-center py-6 cursor-pointer active:opacity-50 transition-opacity"
+                    onClick={() => setIsExpanded(false)}
+                >
+                    <div className="w-16 h-1.5 bg-gray-600 rounded-full" />
                 </div>
-            )}
+
+                {/* Navigation arrows + card */}
+                <div className="relative px-2 pb-6">
+                    {/* Left arrow */}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            currentIndex > 0 && setCurrentIndex(currentIndex - 1);
+                        }}
+                        className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 p-4
+                            ${currentIndex === 0 ? 'text-gray-700' : 'text-[#00ff41]'}`}
+                        disabled={currentIndex === 0}
+                    >
+                        <ChevronLeft size={24} />
+                    </button>
+
+                    {/* Card container */}
+                    <div
+                        ref={containerRef}
+                        className="overflow-hidden mx-8"
+                        onTouchStart={onTouchStart}
+                        onTouchMove={onTouchMove}
+                        onTouchEnd={onTouchEnd}
+                    >
+                        <div
+                            className="flex transition-transform duration-300 ease-out"
+                            style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+                        >
+                            {TIERS.map((tier) => (
+                                <div key={tier.tier} className="w-full flex-shrink-0 px-2">
+                                    <MissionTierCard
+                                        tier={tier.tier}
+                                        title={tier.title}
+                                        description={tier.description}
+                                        cardNumber={tier.cardNumber}
+                                        onSuccess={(sig) => onSuccess?.(tier.tier, sig)}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Right arrow */}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            currentIndex < TIERS.length - 1 && setCurrentIndex(currentIndex + 1);
+                        }}
+                        className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 p-4
+                            ${currentIndex === TIERS.length - 1 ? 'text-gray-700' : 'text-[#00ff41]'}`}
+                        disabled={currentIndex === TIERS.length - 1}
+                    >
+                        <ChevronRight size={24} />
+                    </button>
+                </div>
+
+                {/* Dots indicator */}
+                <div className="flex justify-center gap-3 pb-6">
+                    {TIERS.map((tier, idx) => (
+                        <button
+                            key={idx}
+                            onClick={() => setCurrentIndex(idx)}
+                            className={`transition-all duration-300 ${idx === currentIndex
+                                ? 'bg-[#00ff41] text-black px-3 py-1 rounded-full text-xs font-bold'
+                                : 'bg-gray-800 text-gray-400 px-2 py-1 rounded-full text-xs'
+                                }`}
+                        >
+                            {tier.title}
+                        </button>
+                    ))}
+                </div>
+            </div>
         </div>
     );
 };
