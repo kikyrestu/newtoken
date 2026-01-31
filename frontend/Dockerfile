@@ -1,5 +1,10 @@
-# Build stage
-FROM node:20-alpine AS build
+# =============================================================================
+# MISSION LAUNCHPAD - FRONTEND DOCKERFILE
+# React/Vite build -> Nginx static serve
+# =============================================================================
+
+# Stage 1: Build
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -9,25 +14,26 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci
 
-# Copy source
+# Copy source code
 COPY . .
 
-# Build args for env
-ARG VITE_API_URL
-ENV VITE_API_URL=$VITE_API_URL
+# Copy production env
+COPY .env.production .env
 
-# Build
+# Build for production
 RUN npm run build
 
-# Production stage - Nginx
+# Stage 2: Serve with Nginx
 FROM nginx:alpine
 
 # Copy built files
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 80
+# Expose port
+EXPOSE 80 443
 
+# Start nginx
 CMD ["nginx", "-g", "daemon off;"]
