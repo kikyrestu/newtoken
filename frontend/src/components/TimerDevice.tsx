@@ -292,8 +292,8 @@ export default function TimerDevice({
                                         </label>
                                         <input
                                             type="range"
-                                            min="-40"
-                                            max="40"
+                                            min="-90"
+                                            max="90"
                                             step="0.5"
                                             value={position.x}
                                             onChange={(e) => setPosition(prev => ({ ...prev, x: parseFloat(e.target.value) }))}
