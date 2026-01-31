@@ -64,6 +64,12 @@ COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # Copy PHP config
 COPY docker/php.ini /usr/local/etc/php/conf.d/custom.ini
 
+# Create required directories for supervisor/nginx logs
+RUN mkdir -p /var/log/supervisor \
+    && mkdir -p /var/log/nginx \
+    && mkdir -p /var/log/php-fpm \
+    && mkdir -p /run/nginx
+
 # Expose port
 EXPOSE 80
 
