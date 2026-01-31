@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Move, Save, RotateCcw, Settings, X, Eye, EyeOff } from 'lucide-react';
+import { Move, Save, RotateCcw, Settings, X, Eye, EyeOff, Monitor, Smartphone } from 'lucide-react';
 import CountdownTimer from './CountdownTimer';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { useSiteSettings } from '../hooks/useSiteSettings';
@@ -30,7 +30,37 @@ const DEFAULT_POSITION: Position = {
     digitScale: 1
 };
 
-const SETTINGS_KEY = 'timer-device-position';
+// Mobile default - smaller and differently positioned
+const DEFAULT_POSITION_MOBILE: Position = {
+    x: 0,
+    y: 0,
+    scale: 0.7,
+    digitOffsetX: 0,
+    digitOffsetY: 0,
+    digitScale: 0.9
+};
+
+const SETTINGS_KEY_DESKTOP = 'timer-device-position-desktop';
+const SETTINGS_KEY_MOBILE = 'timer-device-position-mobile';
+const MOBILE_BREAKPOINT = 768;
+
+// Hook to detect mobile vs desktop
+function useIsMobile() {
+    const [isMobile, setIsMobile] = useState(
+        typeof window !== 'undefined' ? window.innerWidth < MOBILE_BREAKPOINT : false
+    );
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    return isMobile;
+}
 
 export default function TimerDevice({
     unlockTimestamp = Date.now() + 24 * 60 * 60 * 1000,
@@ -42,19 +72,39 @@ export default function TimerDevice({
     // STATE
     // ========================================================================
 
+    const isMobile = useIsMobile();
+    const currentDefault = isMobile ? DEFAULT_POSITION_MOBILE : DEFAULT_POSITION;
+
+    // Desktop settings
     const {
-        value: savedPosition,
-        setValue: saveToBackend,
-        reset: resetInBackend,
-        loading: settingsLoading
+        value: savedDesktopPosition,
+        setValue: saveDesktopToBackend,
+        reset: resetDesktopInBackend,
+        loading: desktopLoading
     } = useSiteSettings<Position>({
-        key: SETTINGS_KEY,
+        key: SETTINGS_KEY_DESKTOP,
         defaultValue: DEFAULT_POSITION,
         poll: true,
         pollInterval: 10000
     });
 
-    const [position, setPosition] = useState<Position>(DEFAULT_POSITION);
+    // Mobile settings
+    const {
+        value: savedMobilePosition,
+        setValue: saveMobileToBackend,
+        reset: resetMobileInBackend,
+        loading: mobileLoading
+    } = useSiteSettings<Position>({
+        key: SETTINGS_KEY_MOBILE,
+        defaultValue: DEFAULT_POSITION_MOBILE,
+        poll: true,
+        pollInterval: 10000
+    });
+
+    const savedPosition = isMobile ? savedMobilePosition : savedDesktopPosition;
+    const settingsLoading = isMobile ? mobileLoading : desktopLoading;
+
+    const [position, setPosition] = useState<Position>(currentDefault);
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const [editorOpen, setEditorOpen] = useState(showEditor);
@@ -70,10 +120,10 @@ export default function TimerDevice({
 
     useEffect(() => {
         if (!settingsLoading && savedPosition) {
-            // Merge with defaults for backward compatibility
-            setPosition({ ...DEFAULT_POSITION, ...savedPosition });
+            // Merge with current default for backward compatibility
+            setPosition({ ...currentDefault, ...savedPosition });
         }
-    }, [savedPosition, settingsLoading]);
+    }, [savedPosition, settingsLoading, currentDefault]);
 
     // ========================================================================
     // HANDLERS
@@ -81,18 +131,20 @@ export default function TimerDevice({
 
     const savePosition = useCallback(async () => {
         setIsSaving(true);
-        const success = await saveToBackend(position);
+        const saveFunc = isMobile ? saveMobileToBackend : saveDesktopToBackend;
+        const success = await saveFunc(position);
         setIsSaving(false);
 
         if (success) {
-            console.log('Position saved to backend:', position);
+            console.log(`Position saved to backend (${isMobile ? 'mobile' : 'desktop'}):`, position);
         }
-    }, [position, saveToBackend]);
+    }, [position, isMobile, saveMobileToBackend, saveDesktopToBackend]);
 
     const resetPosition = useCallback(async () => {
-        setPosition(DEFAULT_POSITION);
-        await resetInBackend();
-    }, [resetInBackend]);
+        setPosition(currentDefault);
+        const resetFunc = isMobile ? resetMobileInBackend : resetDesktopInBackend;
+        await resetFunc();
+    }, [currentDefault, isMobile, resetMobileInBackend, resetDesktopInBackend]);
 
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
         if (!editorOpen || activeTab !== 'device') return;
@@ -344,7 +396,7 @@ export default function TimerDevice({
                                     className="flex-1 flex items-center justify-center gap-1.5 bg-[#00ff41] text-black text-xs font-bold py-2 rounded hover:bg-[#00cc33] transition-colors disabled:opacity-50"
                                 >
                                     <Save size={14} />
-                                    {isSaving ? 'Saving...' : 'Save for All'}
+                                    {isSaving ? 'Saving...' : `Save ${isMobile ? 'Mobile' : 'Desktop'}`}
                                 </button>
                                 <button
                                     onClick={resetPosition}
@@ -354,8 +406,19 @@ export default function TimerDevice({
                                 </button>
                             </div>
 
+                            {/* Device Mode Indicator */}
+                            <div className="flex items-center justify-center gap-2 mt-3 p-2 bg-gray-800/50 rounded border border-gray-700">
+                                {isMobile ? (
+                                    <><Smartphone size={14} className="text-cyan-400" />
+                                        <span className="text-cyan-400 text-xs font-bold">EDITING MOBILE</span></>
+                                ) : (
+                                    <><Monitor size={14} className="text-purple-400" />
+                                        <span className="text-purple-400 text-xs font-bold">EDITING DESKTOP</span></>
+                                )}
+                            </div>
+
                             <p className="text-gray-500 text-[10px] mt-2 text-center">
-                                Changes sync to all users within 10s
+                                Resize browser to switch between Desktop/Mobile editing
                             </p>
 
                             <button
