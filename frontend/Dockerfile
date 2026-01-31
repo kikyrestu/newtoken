@@ -11,8 +11,8 @@ WORKDIR /app
 # Copy package files (only package.json, not lockfile)
 COPY package.json ./
 
-# Install dependencies fresh for Linux platform
-RUN npm install --legacy-peer-deps
+# Install dependencies (force to bypass platform checks)
+RUN npm install --legacy-peer-deps --force
 
 # Copy source code
 COPY . .
