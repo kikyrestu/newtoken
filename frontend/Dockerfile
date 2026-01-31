@@ -11,8 +11,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies (legacy-peer-deps for @jup-ag/terminal compatibility)
-RUN npm ci --legacy-peer-deps
+# Install dependencies (npm install instead of ci for cross-platform compatibility)
+RUN npm install --legacy-peer-deps
 
 # Copy source code
 COPY . .
