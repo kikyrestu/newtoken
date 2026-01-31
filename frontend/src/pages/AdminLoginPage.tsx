@@ -8,6 +8,7 @@ const AdminLoginPage = () => {
     const navigate = useNavigate();
     const { isAdminAuthenticated, adminLogin } = useAdminAuth();
 
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
@@ -47,7 +48,7 @@ const AdminLoginPage = () => {
 
         if (isLocked) return;
 
-        const success = adminLogin(password);
+        const success = adminLogin(username, password);
 
         if (success) {
             setError('');
@@ -139,13 +140,34 @@ const AdminLoginPage = () => {
                     )}
 
                     {/* Login Form */}
-                    <form onSubmit={handleLogin} className="space-y-5">
+                    <form onSubmit={handleLogin} className="space-y-4">
+                        {/* Username Input */}
+                        <div className="relative">
+                            <input
+                                type="text"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                placeholder="Admin ID"
+                                disabled={isLocked}
+                                className={`
+                                    w-full bg-black/50 border rounded-lg px-4 py-3
+                                    text-white placeholder-zinc-600
+                                    focus:outline-none focus:ring-2 transition-all
+                                    ${isLocked
+                                        ? 'border-zinc-800 opacity-50 cursor-not-allowed'
+                                        : 'border-zinc-700 focus:border-red-500/50 focus:ring-red-500/20'
+                                    }
+                                `}
+                            />
+                        </div>
+
+                        {/* Password Input */}
                         <div className="relative">
                             <input
                                 type={showPassword ? 'text' : 'password'}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                placeholder="Enter access code"
+                                placeholder="Access Code"
                                 disabled={isLocked}
                                 className={`
                                     w-full bg-black/50 border rounded-lg px-4 py-3 pr-12
