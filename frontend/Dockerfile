@@ -6,6 +6,9 @@
 # Stage 1: Build
 FROM node:20-alpine AS builder
 
+# Install build dependencies for native modules (usb, etc)
+RUN apk add --no-cache python3 make g++ linux-headers eudev-dev
+
 WORKDIR /app
 
 # Copy package files (only package.json, not lockfile)
