@@ -183,10 +183,10 @@ export default function AdminBlockchainConfig() {
                     <div className="bg-gradient-to-r from-[#00ff41]/10 to-transparent border border-[#00ff41]/20 rounded-xl p-5">
                         <h3 className="text-lg font-bold text-[#00ff41] mb-3 flex items-center gap-2">
                             <BookOpen className="w-5 h-5" />
-                            📚 Tutorial: Token Configuration
+                            📚 Tutorial: How to Configure Your Token
                         </h3>
                         <p className="text-gray-300 text-sm mb-4">
-                            This page is used to configure the token settings for the lock system.
+                            This page is used to configure the token that will be used in the lock system.
                             Follow the guide below to understand each field.
                         </p>
                     </div>
@@ -197,16 +197,16 @@ export default function AdminBlockchainConfig() {
                                 <p className="font-semibold text-blue-400 mb-2">📦 Transfer Mode (Recommended for Beginners)</p>
                                 <ul className="list-disc list-inside space-y-1 text-gray-400">
                                     <li>Tokens are transferred to <strong>Treasury Wallet</strong> when user locks</li>
-                                    <li>For unlock, <strong>admin must manually transfer back</strong> to user</li>
+                                    <li>When unlocking, <strong>admin must manually transfer back</strong> to user</li>
                                     <li>No need to deploy custom Solana program</li>
-                                    <li>Suitable for testing and initial launch</li>
+                                    <li>Great for testing and initial launch</li>
                                 </ul>
                             </div>
                             <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
                                 <p className="font-semibold text-purple-400 mb-2">🔐 Program Mode (Advanced)</p>
                                 <ul className="list-disc list-inside space-y-1 text-gray-400">
                                     <li>Tokens are stored in <strong>Escrow PDA</strong> on-chain</li>
-                                    <li>Users can <strong>unlock automatically</strong> after timer expires</li>
+                                    <li>User can <strong>unlock automatically</strong> after timer expires</li>
                                     <li>Requires custom Solana program (Anchor)</li>
                                     <li>Needs Program ID and blockchain deployment</li>
                                 </ul>
@@ -216,7 +216,7 @@ export default function AdminBlockchainConfig() {
 
                     <GuideSection title="2️⃣ How to Get Token Mint Address" icon={<Coins className="w-5 h-5" />}>
                         <div className="space-y-3 text-sm text-gray-300 mt-3">
-                            <p><strong>Token Mint Address</strong> is the unique address of your token on Solana blockchain.</p>
+                            <p><strong>Token Mint Address</strong> is the unique address of the token on Solana blockchain.</p>
                             <div className="p-3 bg-black/50 rounded-lg font-mono text-xs">
                                 <p className="text-gray-500 mb-1"># Example Token Mint Address:</p>
                                 <p className="text-[#00ff41]">7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr</p>
@@ -233,28 +233,28 @@ export default function AdminBlockchainConfig() {
 
                     <GuideSection title="3️⃣ What is Treasury Wallet?" icon={<Wallet className="w-5 h-5" />}>
                         <div className="space-y-3 text-sm text-gray-300 mt-3">
-                            <p><strong>Treasury Wallet</strong> is the wallet that receives tokens when users lock.</p>
+                            <p><strong>Treasury Wallet</strong> is the wallet that receives tokens when user locks.</p>
                             <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-yellow-300">
                                 <p className="font-semibold">⚠️ Important:</p>
                                 <ul className="list-disc list-inside text-sm mt-1 space-y-1">
                                     <li>Make sure this wallet <strong>has a Token Account</strong> for your token</li>
-                                    <li>Keep the private key safe - required for manual unlock</li>
-                                    <li>Don't use personal wallet, create a dedicated treasury wallet</li>
+                                    <li>Keep the private key safe - required for unlocking</li>
+                                    <li>Don't use your personal wallet, create a dedicated treasury wallet</li>
                                 </ul>
                             </div>
                         </div>
                     </GuideSection>
 
-                    <GuideSection title="4️⃣ When Do I Need Program ID?" icon={<Code className="w-5 h-5" />}>
+                    <GuideSection title="4️⃣ When Do You Need Program ID?" icon={<Code className="w-5 h-5" />}>
                         <div className="space-y-3 text-sm text-gray-300 mt-3">
                             <p><strong>Program ID</strong> is only required if you're using <strong>Program Mode</strong>.</p>
                             <div className="p-3 bg-gray-500/10 border border-gray-500/20 rounded-lg">
                                 <p className="text-gray-400">If using <strong>Transfer Mode</strong>:</p>
-                                <p className="font-mono text-sm mt-1 text-gray-500">Leave default: 11111111111111111111111111111111</p>
+                                <p className="font-mono text-sm mt-1 text-gray-500">Leave as default: 11111111111111111111111111111111</p>
                             </div>
                             <p className="text-gray-400 mt-2">
-                                Program ID is obtained after deploying Anchor program to Solana.
-                                If you don't know what this is, use Transfer Mode.
+                                Program ID is obtained after deploying an Anchor program to Solana.
+                                If you don't know what that is, use Transfer Mode.
                             </p>
                         </div>
                     </GuideSection>
@@ -307,7 +307,7 @@ export default function AdminBlockchainConfig() {
             <div className="bg-black/40 border border-[#00ff41]/10 rounded-xl p-5">
                 <div className="flex items-center gap-2 mb-4">
                     <Shield className="w-5 h-5 text-[#00ff41]" />
-                    <Tooltip content="Choose how tokens will be locked. Transfer Mode for simple setup, Program Mode for automatic unlock.">
+                    <Tooltip content="Pilih bagaimana token akan di-lock. Transfer Mode untuk sederhana, Program Mode untuk otomatis unlock.">
                         <h3 className="font-semibold text-white">Lock Mode</h3>
                     </Tooltip>
                 </div>
@@ -460,7 +460,7 @@ export default function AdminBlockchainConfig() {
                             <div>
                                 <label className="flex items-center text-xs text-gray-500 mb-1">
                                     Decimals
-                                    <Tooltip content="Number of token decimals. Almost all SPL tokens use 9 decimals. If unsure, leave as 9.">
+                                    <Tooltip content="Jumlah decimal token. Hampir semua SPL token menggunakan 9 decimals. Jika ragu, biarkan 9.">
                                         <span />
                                     </Tooltip>
                                 </label>
@@ -482,7 +482,7 @@ export default function AdminBlockchainConfig() {
                     <div className="bg-black/40 border border-purple-500/20 rounded-xl p-5">
                         <div className="flex items-center gap-2 mb-4">
                             <Code className="w-5 h-5 text-purple-400" />
-                            <Tooltip content="Program ID from custom Solana program (Anchor). Required for Program Mode with automatic escrow.">
+                            <Tooltip content="Program ID dari custom Solana program (Anchor). Diperlukan untuk Program Mode dengan escrow otomatis.">
                                 <h3 className="font-semibold text-white">Smart Contract (Program Mode)</h3>
                             </Tooltip>
                         </div>
@@ -490,7 +490,7 @@ export default function AdminBlockchainConfig() {
                         <div className="space-y-4">
                             <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg text-sm text-purple-300">
                                 <Info className="w-4 h-4 inline mr-2" />
-                                Program Mode requires deploying a custom Anchor program to Solana.
+                                Program Mode memerlukan deploy custom Anchor program ke Solana.
                             </div>
                             <div>
                                 <label className="block text-xs text-gray-500 mb-1">Program ID *</label>
@@ -501,7 +501,7 @@ export default function AdminBlockchainConfig() {
                                     placeholder="ProgramId123..."
                                     className="w-full px-3 py-2 bg-black/40 border border-purple-500/30 rounded-lg text-white text-sm font-mono focus:outline-none focus:border-purple-500/50"
                                 />
-                                <p className="text-xs text-gray-600 mt-1">Obtained after deploying Anchor program to Solana</p>
+                                <p className="text-xs text-gray-600 mt-1">Didapat setelah deploy Anchor program ke Solana</p>
                             </div>
                         </div>
                     </div>
@@ -511,7 +511,7 @@ export default function AdminBlockchainConfig() {
                 <div className="bg-black/40 border border-[#00ff41]/10 rounded-xl p-5">
                     <div className="flex items-center gap-2 mb-4">
                         <Wallet className="w-5 h-5 text-[#00ff41]" />
-                        <Tooltip content="Wallet to receive locked tokens. In Transfer Mode, all tokens go to Treasury Wallet.">
+                        <Tooltip content="Wallet untuk menerima token yang di-lock. Di Transfer Mode, semua token masuk ke Treasury Wallet.">
                             <h3 className="font-semibold text-white">Wallets</h3>
                         </Tooltip>
                     </div>
@@ -520,7 +520,7 @@ export default function AdminBlockchainConfig() {
                         <div>
                             <label className="flex items-center text-xs text-gray-500 mb-1">
                                 Treasury Wallet *
-                                <Tooltip content="Wallet that receives tokens when user locks. IMPORTANT: Keep private key safe - required for manual unlock in Transfer Mode.">
+                                <Tooltip content="Wallet yang menerima token saat user lock. PENTING: Simpan private key dengan aman - diperlukan untuk unlock manual di Transfer Mode.">
                                     <span />
                                 </Tooltip>
                             </label>
@@ -534,13 +534,13 @@ export default function AdminBlockchainConfig() {
                                 />
                                 {config.treasury_wallet && <CopyButton text={config.treasury_wallet} />}
                             </div>
-                            <p className="text-xs text-yellow-500/80 mt-1">⚠️ Keep treasury private key safe!</p>
+                            <p className="text-xs text-yellow-500/80 mt-1">⚠️ Simpan private key treasury dengan aman!</p>
                         </div>
 
                         <div>
                             <label className="flex items-center text-xs text-gray-500 mb-1">
                                 Authority Wallet
-                                <Tooltip content="Wallet with admin privilege for emergency unlock. Usually same as Treasury, but can be separated for security.">
+                                <Tooltip content="Wallet dengan privilege admin untuk emergency unlock. Biasanya sama dengan Treasury, tapi bisa dipisah untuk keamanan.">
                                     <span />
                                 </Tooltip>
                             </label>
@@ -559,7 +559,7 @@ export default function AdminBlockchainConfig() {
                 <div className="bg-black/40 border border-[#00ff41]/10 rounded-xl p-5 lg:col-span-2">
                     <div className="flex items-center gap-2 mb-4">
                         <Coins className="w-5 h-5 text-[#00ff41]" />
-                        <Tooltip content="Token price source for USD value calculation. Jupiter or Raydium will provide real-time prices from DEX.">
+                        <Tooltip content="Sumber harga token untuk kalkulasi USD value. Jupiter atau Raydium akan memberikan harga real-time dari DEX.">
                             <h3 className="font-semibold text-white">Price Oracle</h3>
                         </Tooltip>
                     </div>
@@ -575,11 +575,11 @@ export default function AdminBlockchainConfig() {
                                 <option value="jupiter">Jupiter (Recommended)</option>
                                 <option value="raydium">Raydium</option>
                             </select>
-                            <p className="text-xs text-gray-600 mt-1">Automatic pricing from DEX market</p>
+                            <p className="text-xs text-gray-600 mt-1">Harga otomatis dari market DEX</p>
                         </div>
                         <div className="flex items-end">
                             <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-sm text-green-400 w-full">
-                                <strong>Auto-sync:</strong> Token price will be automatically fetched from {config.price_oracle === 'jupiter' ? 'Jupiter' : 'Raydium'} DEX in real-time.
+                                <strong>Auto-sync:</strong> Harga token akan otomatis diambil dari {config.price_oracle === 'jupiter' ? 'Jupiter' : 'Raydium'} DEX secara real-time.
                             </div>
                         </div>
                     </div>
@@ -590,14 +590,14 @@ export default function AdminBlockchainConfig() {
             {lockMode === 'transfer' ? (
                 <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 text-sm text-blue-300">
                     <Info className="w-4 h-4 inline mr-2" />
-                    <strong>Transfer Mode Active:</strong> Tokens will be transferred to Treasury when locked. For unlock, admin needs to manually transfer tokens back to user from Treasury wallet.
-                    Make sure you have access to Treasury private key.
+                    <strong>Transfer Mode Active:</strong> Token akan ditransfer ke Treasury saat lock. Untuk unlock, admin perlu manual transfer token kembali ke user dari Treasury wallet.
+                    Pastikan Anda memiliki akses ke private key Treasury.
                 </div>
             ) : (
                 <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4 text-sm text-purple-300">
                     <Info className="w-4 h-4 inline mr-2" />
-                    <strong>Program Mode Active:</strong> Tokens are stored in escrow PDA on-chain. Users can claim tokens automatically after timer expires via smart contract.
-                    Make sure Program ID is deployed correctly.
+                    <strong>Program Mode Active:</strong> Token disimpan di escrow PDA on-chain. User dapat claim token secara otomatis setelah timer expired melalui smart contract.
+                    Pastikan Program ID sudah di-deploy dengan benar.
                 </div>
             )}
 

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { TacticalWalletButton } from './TacticalWalletButton';
 import { MissionTierCard } from './MissionTierCard';
@@ -21,63 +21,6 @@ import { type TierType } from '../hooks/useLockProgram';
 // Token mint address - update with your actual token
 const TOKEN_MINT = import.meta.env.VITE_TOKEN_MINT || '11111111111111111111111111111111';
 
-// Animated loading skeleton for video background
-const VideoLoadingSkeleton = () => (
-    <div className="absolute inset-0 bg-[#0a0c10] z-0">
-        {/* Animated gradient background */}
-        <div
-            className="absolute inset-0 animate-pulse"
-            style={{
-                background: 'linear-gradient(135deg, #0a0c10 0%, #0d1117 25%, #0a0c10 50%, #0d1117 75%, #0a0c10 100%)',
-                backgroundSize: '400% 400%',
-                animation: 'gradientMove 3s ease infinite'
-            }}
-        />
-
-        {/* Matrix-style loading effect */}
-        <div className="absolute inset-0 overflow-hidden opacity-20">
-            {[...Array(20)].map((_, i) => (
-                <div
-                    key={i}
-                    className="absolute text-[#00ff41] font-mono text-xs animate-pulse"
-                    style={{
-                        left: `${(i * 5) % 100}%`,
-                        top: `${Math.random() * 100}%`,
-                        animationDelay: `${i * 0.1}s`,
-                        opacity: Math.random() * 0.5 + 0.2
-                    }}
-                >
-                    {['01', '10', '11', '00'][Math.floor(Math.random() * 4)]}
-                </div>
-            ))}
-        </div>
-
-        {/* Center loading indicator */}
-        <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-                <div className="relative">
-                    {/* Outer ring */}
-                    <div className="w-16 h-16 border-2 border-[#00ff41]/20 rounded-full animate-ping" />
-                    {/* Inner ring */}
-                    <div className="absolute inset-0 w-16 h-16 border-2 border-t-[#00ff41] border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin" />
-                </div>
-                <p className="mt-4 text-[#00ff41]/60 text-sm font-mono animate-pulse">
-                    INITIALIZING VIDEO FEED...
-                </p>
-            </div>
-        </div>
-
-        {/* Scanlines effect while loading */}
-        <div
-            className="absolute inset-0 pointer-events-none opacity-30"
-            style={{
-                backgroundImage: 'linear-gradient(transparent 50%, rgba(0, 0, 0, 0.5) 50%)',
-                backgroundSize: '100% 4px'
-            }}
-        />
-    </div>
-);
-
 // Inner component that uses the visual editor context
 const MissionObserverHeroInner = () => {
     const { connected } = useWallet();
@@ -91,20 +34,8 @@ const MissionObserverHeroInner = () => {
     const [activeTierModal, setActiveTierModal] = useState<TierType | null>(null); // New state for Tier Detail Modal
     const [isClosingModal, setIsClosingModal] = useState(false);
 
-    // Video loading state
-    const [videoLoaded, setVideoLoaded] = useState(false);
-    const [videoError, setVideoError] = useState(false);
-    const videoRef = useRef<HTMLVideoElement>(null);
-
     // Demo mode state (fallback if backend data missing)
     const [demoUnlockTimestamp, setDemoUnlockTimestamp] = useState<number | null>(null);
-
-    // Preload video more aggressively
-    useEffect(() => {
-        if (videoRef.current) {
-            videoRef.current.load();
-        }
-    }, []);
 
     // Handle modal close with TV off animation
     const handleCloseModal = (modalType: 'safety' | 'instructions') => {
@@ -134,31 +65,14 @@ const MissionObserverHeroInner = () => {
             <DebugRuler show={showRuler} />
             <VisualEditorControls />
 
-            {/* VIDEO LOADING SKELETON - Show while video is loading */}
-            {!videoLoaded && !videoError && <VideoLoadingSkeleton />}
-
-            {/* STATIC FALLBACK - Show if video fails to load */}
-            {videoError && (
-                <div
-                    className="absolute inset-0 bg-cover bg-center opacity-90"
-                    style={{ backgroundImage: 'url(/bg-drone.png)' }}
-                />
-            )}
-
             {/* VIDEO BACKGROUND */}
             <video
-                ref={videoRef}
                 autoPlay
                 loop
                 muted
                 playsInline
-                preload="auto"
                 poster="/bg-drone.png"
-                onCanPlayThrough={() => setVideoLoaded(true)}
-                onLoadedData={() => setVideoLoaded(true)}
-                onError={() => setVideoError(true)}
-                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${videoLoaded ? 'opacity-90' : 'opacity-0'
-                    }`}
+                className="absolute inset-0 w-full h-full object-cover opacity-90"
             >
                 <source src="/bg-drone-bagus.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
