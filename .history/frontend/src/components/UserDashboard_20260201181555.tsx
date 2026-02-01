@@ -122,7 +122,7 @@ export const UserDashboard: React.FC = () => {
                                                 </div>
                                                 <div className="flex justify-between mt-2 text-[10px] text-gray-500">
                                                     <span>STATUS: DEPLOYED</span>
-                                                    <span>UNLOCK: {new Date(lock.unlock_timestamp).toLocaleDateString()}</span>
+                                                    <span>UNLOCK: {new Date(lock.unlock_time * 1000).toLocaleDateString()}</span>
                                                 </div>
                                             </div>
                                         ))

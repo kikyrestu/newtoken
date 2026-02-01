@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  # ==========================================================================
+  # FRONTEND - React/Vite (Nginx serving static build)
+  # ==========================================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: mission_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+    networks:
+      - mission_network
+    environment:
+      - NODE_ENV=production
+
+  # ==========================================================================
+  # BACKEND - Laravel PHP-FPM + Nginx
+  # ==========================================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mission_backend
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - mission_network
+    environment:
+      - APP_ENV=production
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=mission_launchpad
+      - DB_USERNAME=mission_user
+      - DB_PASSWORD=${DB_PASSWORD:-secure_password_123}
+    volumes:
+      - backend_storage:/var/www/html/storage
+      - backend_logs:/var/www/html/storage/logs
+
+  # ==========================================================================
+  # DATABASE - MySQL 8.0
+  # ==========================================================================
+  mysql:
+    image: mysql:8.0
+    container_name: mission_mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password_123}
+      MYSQL_DATABASE: mission_launchpad
+      MYSQL_USER: mission_user
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secure_password_123}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - mission_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root_password_123}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: --default-authentication-plugin=mysql_native_password
+
+  # ==========================================================================
+  # PHPMYADMIN (Optional - for database management)
+  # ==========================================================================
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: mission_phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: mission_user
+      PMA_PASSWORD: ${DB_PASSWORD:-secure_password_123}
+    depends_on:
+      - mysql
+    networks:
+      - mission_network
+
+networks:
+  mission_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  backend_storage:
+  backend_logs:

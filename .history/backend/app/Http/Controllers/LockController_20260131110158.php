@@ -119,6 +119,14 @@ class LockController extends Controller
         $wallet = $validated['wallet'];
         $tier = $validated['tier'];
 
+        // 1. Check if transaction already processed
+        if (LockTransaction::where('signature', $signature)->exists()) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Transaction already processed'
+            ], 400);
+        }
+
         // 2. Verify transaction on-chain
         $result = $this->solanaService->verifyLockTransaction($signature, $wallet);
 
@@ -135,35 +143,28 @@ class LockController extends Controller
             ], 400);
         }
 
-        // 3. Get tier pricing info
+        // 3. Get tier pricing for USD value (dynamic early-bird)
         $tierPrice = $this->earlyBirdPricing->getTierCurrentUsdPrice($tier);
         $tokenPrice = null;
+        
         try {
             $tokenPrice = $this->priceService->getTokenPriceUSD();
-        } catch (\Exception $e) {}
+        } catch (\Exception $e) {
+            // Continue without token price
+        }
 
-        // 4. Record transaction (Atomic)
+        // 4. Create/Update records in transaction
         try {
             DB::beginTransaction();
 
-            // Double check lock inside transaction to reduce race window
-            if (LockTransaction::where('signature', $signature)->exists()) {
-                DB::rollBack();
-                return response()->json([
-                    'success' => true, // Idempotent success
-                    'message' => 'Transaction already processed',
-                    'data' => [
-                        'tier' => $tier,
-                        'signature' => $signature
-                    ]
-                ]);
-            }
-
-            // Create or get user wallet (Atomic lock with firstOrCreate)
+            // Create or get user wallet
             $userWallet = UserWallet::firstOrCreate(
                 ['wallet_address' => $wallet],
                 ['first_lock_at' => now()]
             );
+
+            // Calculate lock duration
+            $lockDurationDays = config('solana.default_lock_duration_days', 30);
 
             // Create lock transaction record
             $lockTx = LockTransaction::create([
@@ -172,7 +173,7 @@ class LockController extends Controller
                 'escrow_pda' => $result['escrow_pda'],
                 'amount' => $result['amount'],
                 'tier' => $tier,
-                'lock_duration_days' => config('solana.default_lock_duration_days', 30),
+                'lock_duration_days' => $lockDurationDays,
                 'lock_timestamp' => Carbon::createFromTimestamp($result['lock_timestamp']),
                 'unlock_timestamp' => Carbon::createFromTimestamp($result['unlock_timestamp']),
                 'status' => LockTransaction::STATUS_LOCKED,
@@ -180,41 +181,49 @@ class LockController extends Controller
                 'token_price_at_lock' => $tokenPrice,
             ]);
 
-            // Update Aggregates
+            // Update user's current tier & total locked
             $userWallet->update([
                 'current_tier' => $tier,
                 'total_locked_amount' => $userWallet->total_locked_amount + $result['amount']
             ]);
-            
+
+            // Update global stats
             $this->updateGlobalStats($tier, $result['amount'], $tierPrice);
 
             DB::commit();
+
+            Log::info('Lock transaction verified and recorded', [
+                'signature' => $signature,
+                'wallet' => $wallet,
+                'tier' => $tier,
+                'amount' => $result['amount']
+            ]);
 
             return response()->json([
                 'success' => true,
                 'data' => [
                     'tier' => $tier,
                     'amount' => $result['amount'],
+                    'amount_formatted' => $this->priceService->formatTokenAmount($result['amount']),
                     'escrow_pda' => $result['escrow_pda'],
                     'lock_timestamp' => Carbon::createFromTimestamp($result['lock_timestamp'])->toISOString(),
-                    'solscan_url' => "https://solscan.io/tx/{$signature}" . (config('app.env') === 'local' ? '?cluster=devnet' : '')
+                    'unlock_timestamp' => Carbon::createFromTimestamp($result['unlock_timestamp'])->toISOString(),
+                    'usd_value' => $tierPrice,
+                    'solscan_url' => "https://solscan.io/tx/{$signature}" . (env('DEV_MODE', false) ? '?cluster=devnet' : '')
                 ]
             ]);
 
-        } catch (\Illuminate\Database\QueryException $e) {
-            DB::rollBack();
-            // Handle Unique Constraint Violation (Race Condition caught by DB)
-            if ($e->getCode() == '23000') { // Integrity constraint violation
-                 return response()->json([
-                    'success' => true, // Return success to frontend so it doesn't error out
-                    'message' => 'Transaction processed successfully (deduplicated)'
-                ]);
-            }
-            throw $e;
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Lock recording failed', ['error' => $e->getMessage()]);
-            return response()->json(['success' => false, 'error' => 'Processing failed'], 500);
+            Log::error('Failed to record lock transaction', [
+                'signature' => $signature,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to record transaction'
+            ], 500);
         }
     }
 

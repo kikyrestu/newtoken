@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { TacticalWalletButton } from './TacticalWalletButton';
 import { MissionTierCard } from './MissionTierCard';
@@ -16,7 +16,7 @@ import { Shield, X } from 'lucide-react';
 import { VisualEditorProvider, VisualEditorControls, useVisualEditor } from './VisualEditorControls';
 import { EditableText } from './EditableText';
 import { TierDetailModal } from './TierDetailModal';
-import { type TierType } from '../hooks/useLockProgram';
+import { useLockProgram, type TierType } from '../hooks/useLockProgram';
 
 // Token mint address - update with your actual token
 const TOKEN_MINT = import.meta.env.VITE_TOKEN_MINT || '11111111111111111111111111111111';
@@ -33,9 +33,6 @@ const MissionObserverHeroInner = () => {
     const [showInstructionsModal, setShowInstructionsModal] = useState(false);
     const [activeTierModal, setActiveTierModal] = useState<TierType | null>(null); // New state for Tier Detail Modal
     const [isClosingModal, setIsClosingModal] = useState(false);
-
-    // Demo mode state (fallback if backend data missing)
-    const [demoUnlockTimestamp, setDemoUnlockTimestamp] = useState<number | null>(null);
 
     // Handle modal close with TV off animation
     const handleCloseModal = (modalType: 'safety' | 'instructions') => {

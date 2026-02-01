@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { TacticalWalletButton } from './TacticalWalletButton';
 import { MissionTierCard } from './MissionTierCard';
@@ -9,14 +9,13 @@ import { TelemetryWidget } from './TelemetryWidget';
 import { DebugRuler } from './DebugRuler';
 import TimerDevice from './TimerDevice';
 import { InstructionsModal } from './InstructionsModal';
+import { WelcomeGuide } from './WelcomeGuide';
 import { MobileCardCarousel } from './MobileCardCarousel';
 import { MobileHeader } from './MobileHeader';
 import { useUserDashboard } from '../hooks/useUserDashboard';
 import { Shield, X } from 'lucide-react';
 import { VisualEditorProvider, VisualEditorControls, useVisualEditor } from './VisualEditorControls';
 import { EditableText } from './EditableText';
-import { TierDetailModal } from './TierDetailModal';
-import { type TierType } from '../hooks/useLockProgram';
 
 // Token mint address - update with your actual token
 const TOKEN_MINT = import.meta.env.VITE_TOKEN_MINT || '11111111111111111111111111111111';
@@ -31,11 +30,25 @@ const MissionObserverHeroInner = () => {
     const [showDashboard, setShowDashboard] = useState(false);
     const [showSafetyModal, setShowSafetyModal] = useState(false);
     const [showInstructionsModal, setShowInstructionsModal] = useState(false);
-    const [activeTierModal, setActiveTierModal] = useState<TierType | null>(null); // New state for Tier Detail Modal
     const [isClosingModal, setIsClosingModal] = useState(false);
-
-    // Demo mode state (fallback if backend data missing)
+    const [showWelcomeGuide, setShowWelcomeGuide] = useState(false);
+    // Demo mode: store local unlock timestamp when user completes a lock
     const [demoUnlockTimestamp, setDemoUnlockTimestamp] = useState<number | null>(null);
+
+    // Show welcome guide for non-connected users (only once)
+    useEffect(() => {
+        if (!connected) {
+            const hasSeenGuide = localStorage.getItem('defense_guide_seen');
+            if (!hasSeenGuide) {
+                setTimeout(() => setShowWelcomeGuide(true), 1000);
+            }
+        }
+    }, [connected]);
+
+    const handleCloseWelcomeGuide = () => {
+        setShowWelcomeGuide(false);
+        localStorage.setItem('defense_guide_seen', 'true');
+    };
 
     // Handle modal close with TV off animation
     const handleCloseModal = (modalType: 'safety' | 'instructions') => {
@@ -229,6 +242,7 @@ const MissionObserverHeroInner = () => {
                                                     <MissionTierCard
                                                         tier="spectator"
                                                         title={<EditableText storageKey="spectator_title">Observer $25</EditableText>}
+                                                        cardNumber=""
                                                         isLocked={!!spectatorLock}
                                                         lockedSignature={spectatorLock?.signature}
                                                         onClick={() => setActiveTierModal('spectator')}
@@ -244,6 +258,7 @@ const MissionObserverHeroInner = () => {
                                                     <MissionTierCard
                                                         tier="operator"
                                                         title={<EditableText storageKey="operator_title">Recon Drone Operator $150</EditableText>}
+                                                        cardNumber=""
                                                         isLocked={!!operatorLock}
                                                         lockedSignature={operatorLock?.signature}
                                                         onClick={() => setActiveTierModal('operator')}
@@ -259,6 +274,7 @@ const MissionObserverHeroInner = () => {
                                                     <MissionTierCard
                                                         tier="elite"
                                                         title={<EditableText storageKey="elite_title">Advanced Drone Operator $250</EditableText>}
+                                                        cardNumber=""
                                                         isLocked={!!eliteLock}
                                                         lockedSignature={eliteLock?.signature}
                                                         onClick={() => setActiveTierModal('elite')}

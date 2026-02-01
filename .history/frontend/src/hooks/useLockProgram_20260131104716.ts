@@ -32,8 +32,9 @@ let cachedConfig: { programId: string; tokenMint: string; decimals: number; trea
 let configLastFetched = 0;
 const CONFIG_CACHE_TTL = 60000; // 1 minute
 
-// Unlock availability - Enabled for Production/Testing
-export const UNLOCK_ENABLED = true;
+// Unlock availability - set to false until smart contract is deployed
+// This prevents users from attempting unlock transactions that would fail
+export const UNLOCK_ENABLED = false;
 
 /**
  * Fetch blockchain config from backend

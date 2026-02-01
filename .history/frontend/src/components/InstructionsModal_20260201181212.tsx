@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Target, Wallet, CheckCircle, Lock, Monitor, RefreshCw, Zap } from 'lucide-react';
+import { X, Rocket, Target, Clock, Wallet, Gift, CheckCircle } from 'lucide-react';
 
 interface InstructionsModalProps {
     isOpen: boolean;

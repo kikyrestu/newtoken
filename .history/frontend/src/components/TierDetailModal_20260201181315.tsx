@@ -170,15 +170,10 @@ export const TierDetailModal: React.FC<TierDetailModalProps> = ({
                         <div className="mb-4">
                             {tierContent.features.map((feature, i) => (
                                 <div key={i} className="flex items-start gap-2 mb-2 text-gray-300 text-sm">
-                                    <span className="text-[#00ff41] mt-0.5">›</span>
+                                    <span className="text-[#00ff41] mt-0.5">-</span>
                                     <span>{feature}</span>
                                 </div>
                             ))}
-                        </div>
-
-                        {/* Role Focus */}
-                        <div className="mb-4 p-3 bg-[#0a0c10] border border-gray-800 rounded mx-auto text-center">
-                            <i className="text-xs text-blue-300">{tierContent.roleFocus}</i>
                         </div>
 
                         {/* Rewards */}
