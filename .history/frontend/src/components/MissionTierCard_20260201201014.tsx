@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Lock } from 'lucide-react';
 import { TIERS } from '../hooks/useLockProgram';

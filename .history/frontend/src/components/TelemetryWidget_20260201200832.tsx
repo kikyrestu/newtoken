@@ -68,7 +68,7 @@ export const TelemetryWidget: React.FC<TelemetryWidgetProps> = ({
     return (
         <div className="relative flex flex-col gap-4 w-[280px] animate-slide-in-left">
             {/* --- DATA CARD --- */}
-            <div className="relative bg-black/10 backdrop-blur-sm border border-white/10 rounded-lg overflow-hidden">
+            <div className="relative bg-black/10 backdrop-blur-sm border-l-4 border-[#00ff41] overflow-hidden">
                 {/* Header */}
                 <div className="flex flex-col border-b border-white/10 p-3 pb-2">
                     <h3 className="text-[#00ff41] font-bold text-xs tracking-[0.2em] uppercase leading-none mb-1">

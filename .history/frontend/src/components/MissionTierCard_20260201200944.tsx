@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Lock } from 'lucide-react';
 import { TIERS } from '../hooks/useLockProgram';
@@ -40,9 +40,6 @@ export const MissionTierCard: React.FC<MissionTierCardProps> = ({
         operator: 'Seek. Identify. Mark.',
         elite: 'Seek. Identify. Execute.'
     };
-
-    // Card status logic
-    const isSuccess = isLocked;
     const borderClass = isSuccess
         ? 'border-[#00ff41] shadow-[0_0_30px_rgba(0,255,65,0.4)]'
         : 'border-[#333] hover:border-[#00ff41] group-hover:shadow-[0_0_25px_rgba(0,255,65,0.15)]';
