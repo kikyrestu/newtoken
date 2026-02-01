@@ -33,10 +33,8 @@ class LockTransaction extends Model
         'lock_duration_days' => 'integer',
         'lock_timestamp' => 'datetime',
         'unlock_timestamp' => 'datetime',
-        'unlocked_at' => 'datetime',
         'usd_value_at_lock' => 'decimal:2',
         'token_price_at_lock' => 'decimal:10',
-        'admin_unlocked' => 'boolean',
     ];
 
     /**

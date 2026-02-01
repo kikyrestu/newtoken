@@ -623,38 +623,4 @@ async function verifyLockWithBackend(
     }
 }
 
-/**
- * Verify unlock transaction with backend
- */
-async function verifyUnlockWithBackend(
-    signature: string,
-    wallet: string,
-    lockId: number
-): Promise<{ success: boolean; data?: any; error?: string }> {
-    try {
-        const response = await fetch(`${API_BASE_URL}/unlock/verify`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({ signature, wallet, lock_id: lockId })
-        });
-
-        const data = await response.json();
-        return {
-            success: data.success ?? false,
-            data: data.data,
-            error: data.error
-        };
-    } catch (err: any) {
-        console.error('Backend unlock verification failed:', err);
-        return {
-            success: false,
-            error: err.message
-        };
-    }
-}
-
 export default useLockProgram;
-

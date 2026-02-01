@@ -613,7 +613,7 @@ async function verifyLockWithBackend(
             success: data.success ?? false,
             data: data.data,
             error: data.error
-        };
+        }; \r
     } catch (err: any) {
         console.error('Backend verification failed:', err);
         return {
