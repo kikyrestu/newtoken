@@ -56,7 +56,10 @@ export const StatsPanel: React.FC = () => {
         };
     }, []);
 
-    // Individual tier counts are displayed separately below
+    // Calculate tier summary
+    const tierSummary = stats
+        ? `${stats.tier_breakdown.spectators} / ${stats.tier_breakdown.operators} / ${stats.tier_breakdown.elite}`
+        : 'N/A';
 
     // Show error state if there's an error
     if (error) {
