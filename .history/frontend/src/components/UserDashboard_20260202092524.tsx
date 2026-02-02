@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useUserDashboard } from '../hooks/useUserDashboard';
-import { Shield, History, Radio, Layout, Camera, Gamepad2, ChevronDown, ChevronUp, Info, Zap, Users, Clock, Trophy, Target } from 'lucide-react';
+import { Shield, History, Layout, Camera, Gamepad2, ChevronDown, ChevronUp, Info, Zap, Users, Clock, Trophy, Target } from 'lucide-react';
 
 // Mission data from Vanja
 const MISSIONS_DATA = [
