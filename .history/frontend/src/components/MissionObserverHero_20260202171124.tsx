@@ -83,7 +83,6 @@ const MissionObserverHeroInner = () => {
     const { connected } = useWallet();
     const { nextUnlock, dashboard } = useUserDashboard();
     const { showRuler } = useVisualEditor();
-    const { config: blockchainConfig } = useBlockchainConfig();
 
     const [showSwapModal, setShowSwapModal] = useState(false);
     const [showDashboard, setShowDashboard] = useState(false);
@@ -398,7 +397,7 @@ const MissionObserverHeroInner = () => {
             <JupiterSwapModal
                 isOpen={showSwapModal}
                 onClose={() => setShowSwapModal(false)}
-                outputMint={blockchainConfig.token_mint || ''}
+                outputMint={TOKEN_MINT}
                 fixedOutput={true}
                 onSuccess={(txid) => {
                     console.log('Swap successful:', txid);
