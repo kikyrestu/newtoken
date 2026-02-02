@@ -69,8 +69,6 @@ export default function AdminDashboard() {
                 return <AdminUsers />;
             case 'transactions':
                 return <AdminTransactions />;
-            case 'missions':
-                return <AdminMissions />;
             case 'settings':
                 return <AdminSettings />;
             case 'tiers':

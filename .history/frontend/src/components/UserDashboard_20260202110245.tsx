@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useUserDashboard } from '../hooks/useUserDashboard';
 import { useMissions } from '../hooks/useMissions';
-import { Camera } from 'lucide-react';
+import { Camera, Loader2 } from 'lucide-react';
 
 export const UserDashboard: React.FC = () => {
     const { connected } = useWallet();
@@ -115,38 +115,30 @@ export const UserDashboard: React.FC = () => {
                                         </thead>
                                         {/* Table Body */}
                                         <tbody>
-                                            {missions.length === 0 ? (
-                                                <tr>
-                                                    <td colSpan={6} className="py-4 text-center text-gray-500">
-                                                        No missions available
+                                            {MISSIONS_DATA.map((mission, idx) => (
+                                                <tr key={idx} className="text-white border-b border-gray-800/50 hover:bg-[#00ff41]/5">
+                                                    <td className="py-2 px-2">{mission.title}</td>
+                                                    <td className={`py-2 px-2 ${mission.difficulty === 'Easy' ? 'text-green-400' : 'text-yellow-400'}`}>
+                                                        {mission.difficulty}
                                                     </td>
+                                                    <td className="py-2 px-2 text-[#00ff41]">{mission.rewards}</td>
+                                                    <td className="py-2 px-2">
+                                                        {mission.missionPoints.includes(' - ') ? (
+                                                            <>
+                                                                <span className="text-blue-400">{mission.missionPoints.split(' - ')[0]}</span>
+                                                                <span className="text-gray-500"> - </span>
+                                                                <span className="text-green-400">{mission.missionPoints.split(' - ')[1]}</span>
+                                                                <span className="text-gray-500"> - </span>
+                                                                <span className="text-yellow-400">{mission.missionPoints.split(' - ')[2]}</span>
+                                                            </>
+                                                        ) : (
+                                                            <span className="text-green-400">{mission.missionPoints}</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="py-2 px-2 text-gray-300">{mission.participants}</td>
+                                                    <td className="py-2 px-2 text-gray-300">{mission.startIn}</td>
                                                 </tr>
-                                            ) : (
-                                                missions.map((mission) => (
-                                                    <tr key={mission.id} className="text-white border-b border-gray-800/50 hover:bg-[#00ff41]/5">
-                                                        <td className="py-2 px-2">{mission.title}</td>
-                                                        <td className={`py-2 px-2 ${mission.difficulty === 'Easy' ? 'text-green-400' : 'text-yellow-400'}`}>
-                                                            {mission.difficulty}
-                                                        </td>
-                                                        <td className="py-2 px-2 text-[#00ff41]">{mission.rewards}</td>
-                                                        <td className="py-2 px-2">
-                                                            {mission.mission_points.includes(' - ') ? (
-                                                                <>
-                                                                    <span className="text-blue-400">{mission.mission_points.split(' - ')[0]}</span>
-                                                                    <span className="text-gray-500"> - </span>
-                                                                    <span className="text-green-400">{mission.mission_points.split(' - ')[1]}</span>
-                                                                    <span className="text-gray-500"> - </span>
-                                                                    <span className="text-yellow-400">{mission.mission_points.split(' - ')[2]}</span>
-                                                                </>
-                                                            ) : (
-                                                                <span className="text-green-400">{mission.mission_points}</span>
-                                                            )}
-                                                        </td>
-                                                        <td className="py-2 px-2 text-gray-300">{mission.participants}</td>
-                                                        <td className="py-2 px-2 text-gray-300">{mission.start_in || '-'}</td>
-                                                    </tr>
-                                                ))
-                                            )}
+                                            ))}
                                         </tbody>
                                     </table>
                                 </div>

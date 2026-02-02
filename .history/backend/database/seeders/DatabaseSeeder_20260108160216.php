@@ -21,8 +21,5 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
-
-        // Seed missions
-        $this->call(MissionSeeder::class);
     }
 }

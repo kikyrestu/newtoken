@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useUserDashboard } from '../hooks/useUserDashboard';
 import { useMissions } from '../hooks/useMissions';
-import { Camera } from 'lucide-react';
+import { Camera, Loader2 } from 'lucide-react';
 
 export const UserDashboard: React.FC = () => {
     const { connected } = useWallet();
