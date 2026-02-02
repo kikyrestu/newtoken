@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useUserDashboard } from '../hooks/useUserDashboard';
-// import { useMissions } from '../hooks/useMissions'; // Not used in current Overview design
+import { useMissions } from '../hooks/useMissions';
 import { Camera } from 'lucide-react';
 
 export const UserDashboard: React.FC = () => {
@@ -14,7 +14,7 @@ export const UserDashboard: React.FC = () => {
     const [topTab, setTopTab] = useState<'overview' | 'my_mission' | 'symbol'>('overview');
     const [sideTab, setSideTab] = useState<'missions' | 'history'>('missions');
 
-    const loading = dashboardLoading;
+    const loading = dashboardLoading || missionsLoading;
 
     if (!connected) {
         return (

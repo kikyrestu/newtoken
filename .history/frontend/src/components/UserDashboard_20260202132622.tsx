@@ -1,20 +1,19 @@
 import React, { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useUserDashboard } from '../hooks/useUserDashboard';
-// import { useMissions } from '../hooks/useMissions'; // Not used in current Overview design
+import { useMissions } from '../hooks/useMissions';
 import { Camera } from 'lucide-react';
 
 export const UserDashboard: React.FC = () => {
     const { connected } = useWallet();
-    const { dashboard, loading: dashboardLoading } = useUserDashboard();
-    // Commented out - missions list not shown in current Overview design
-    // const { missions, loading: missionsLoading } = useMissions();
+    const { loading: dashboardLoading } = useUserDashboard();
+    const { missions, loading: missionsLoading } = useMissions();
 
     // States for Tabs
     const [topTab, setTopTab] = useState<'overview' | 'my_mission' | 'symbol'>('overview');
     const [sideTab, setSideTab] = useState<'missions' | 'history'>('missions');
 
-    const loading = dashboardLoading;
+    const loading = dashboardLoading || missionsLoading;
 
     if (!connected) {
         return (
@@ -98,92 +97,68 @@ export const UserDashboard: React.FC = () => {
 
                     {/* === OVERVIEW TAB === */}
                     {topTab === 'overview' && (
-                        <div className="space-y-4 text-sm">
-                            {/* Rank & Points Section */}
-                            <div className="border border-gray-700 rounded-lg p-4 bg-black/30">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div>
-                                        <span className="text-gray-500 text-xs uppercase tracking-wider">Your Rank</span>
-                                        <p className="text-lg font-bold text-green-400">Novice 🟢</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <span className="text-gray-500 text-xs">Points to next rank</span>
-                                        <p className="text-white font-mono">200</p>
-                                    </div>
+                        <>
+                            {/* MISSIONS CONTENT */}
+                            {sideTab === 'missions' && (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-xs font-mono">
+                                        {/* Table Header */}
+                                        <thead>
+                                            <tr className="text-gray-400 text-left border-b border-gray-700">
+                                                <th className="py-2 px-2 font-normal">Mission Title</th>
+                                                <th className="py-2 px-2 font-normal">Difficulty</th>
+                                                <th className="py-2 px-2 font-normal">Rewards</th>
+                                                <th className="py-2 px-2 font-normal">Points</th>
+                                                <th className="py-2 px-2 font-normal">Participants</th>
+                                                <th className="py-2 px-2 font-normal">Start In</th>
+                                            </tr>
+                                        </thead>
+                                        {/* Table Body */}
+                                        <tbody>
+                                            {missions.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={6} className="py-4 text-center text-gray-500">
+                                                        No missions available
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                missions.map((mission) => (
+                                                    <tr key={mission.id} className="text-white border-b border-gray-800/50 hover:bg-[#00ff41]/5">
+                                                        <td className="py-2 px-2">{mission.title}</td>
+                                                        <td className={`py-2 px-2 ${mission.difficulty === 'Easy' ? 'text-green-400' : 'text-yellow-400'}`}>
+                                                            {mission.difficulty}
+                                                        </td>
+                                                        <td className="py-2 px-2 text-[#00ff41]">{mission.rewards}</td>
+                                                        <td className="py-2 px-2">
+                                                            {mission.mission_points.includes(' - ') ? (
+                                                                <>
+                                                                    <span className="text-blue-400">{mission.mission_points.split(' - ')[0]}</span>
+                                                                    <span className="text-gray-500"> - </span>
+                                                                    <span className="text-green-400">{mission.mission_points.split(' - ')[1]}</span>
+                                                                    <span className="text-gray-500"> - </span>
+                                                                    <span className="text-yellow-400">{mission.mission_points.split(' - ')[2]}</span>
+                                                                </>
+                                                            ) : (
+                                                                <span className="text-green-400">{mission.mission_points}</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="py-2 px-2 text-gray-300">{mission.participants}</td>
+                                                        <td className="py-2 px-2 text-gray-300">{mission.start_in || '-'}</td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-yellow-400">⭐</span>
-                                    <span className="text-gray-500 text-xs">Mission Points:</span>
-                                    <span className="text-white font-bold">{dashboard?.stats?.mission_points || 0}</span>
-                                </div>
-                            </div>
+                            )}
 
-                            {/* Total Tokens Section */}
-                            <div className="border border-gray-700 rounded-lg p-4 bg-black/30">
-                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Total Tokens</h4>
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div>
-                                        <div className="flex items-center gap-1 text-gray-500 text-xs mb-1">
-                                            <span>🪙</span> Earned
-                                        </div>
-                                        <p className="text-white font-mono">{(dashboard?.stats?.total_earned || 0).toLocaleString()}</p>
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center gap-1 text-gray-500 text-xs mb-1">
-                                            <span>🔒</span> <span className="text-[#00ff41]">Locked</span>
-                                        </div>
-                                        <p className="text-[#00ff41] font-mono font-bold">{(dashboard?.stats?.total_locked || 0).toLocaleString()}</p>
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center gap-1 text-gray-500 text-xs mb-1">
-                                            <span>🔥</span> Burned
-                                        </div>
-                                        <p className="text-orange-400 font-mono">{(dashboard?.stats?.total_burned || 0).toLocaleString()}</p>
-                                    </div>
+                            {/* HISTORY CONTENT */}
+                            {sideTab === 'history' && (
+                                <div className="flex items-center justify-center h-full">
+                                    <p className="text-gray-500 text-sm">No data available.</p>
                                 </div>
-                            </div>
-
-                            {/* Missions Status Section */}
-                            <div className="border border-gray-700 rounded-lg p-4 bg-black/30">
-                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Missions</h4>
-                                <div className="space-y-2">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-gray-400 text-xs flex items-center gap-1">
-                                            <span>⏳</span> <span className="text-[#00ff41]">Reserved</span>
-                                        </span>
-                                        <span className="text-[#00ff41] font-bold">{dashboard?.active_locks?.length || 0}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-gray-400 text-xs flex items-center gap-1">
-                                            <span>✅</span> Completed
-                                        </span>
-                                        <span className="text-white">{dashboard?.stats?.missions_completed || 0}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-gray-400 text-xs flex items-center gap-1">
-                                            <span>❌</span> Canceled (Not Started)
-                                        </span>
-                                        <span className="text-gray-500">{dashboard?.stats?.missions_canceled || 0}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-gray-400 text-xs flex items-center gap-1">
-                                            <span>⚠️</span> Failed (Technical Error)
-                                        </span>
-                                        <span className="text-gray-500">{dashboard?.stats?.missions_failed || 0}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Quick Links */}
-                            <div className="flex gap-2 mt-4">
-                                <button
-                                    onClick={() => setTopTab('my_mission')}
-                                    className="flex-1 py-2 bg-[#00ff41]/10 border border-[#00ff41]/50 text-[#00ff41] text-xs font-bold uppercase hover:bg-[#00ff41]/20 transition-all rounded"
-                                >
-                                    View My Mission
-                                </button>
-                            </div>
-                        </div>
+                            )}
+                        </>
                     )}
 
                     {/* === MY MISSION TAB === */}
