@@ -180,7 +180,7 @@ const MissionObserverHeroInner = () => {
             <div className="absolute inset-0 z-10 p-2 md:p-4 flex flex-col h-full pointer-events-none">
 
                 {/* --- MOBILE HEADER (Split 2-row design) --- */}
-                <div className="md:hidden relative z-[200]">
+                <div className="md:hidden">
                     <MobileHeader
                         onSafetyClick={() => setShowSafetyModal(true)}
                         onInstructionsClick={() => setShowInstructionsModal(true)}
