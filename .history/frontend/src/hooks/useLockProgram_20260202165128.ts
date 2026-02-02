@@ -527,24 +527,20 @@ function createLockInstruction(
 
     // Encode instruction data
     // Format: discriminator + amount (u64) + lock_duration (i64) + tier (string)
+    const amountBuffer = Buffer.alloc(8);
+    amountBuffer.writeBigUInt64LE(amount, 0);
 
-    // Use DataView for bigint since browser Buffer polyfill doesn't support bigint methods
-    const amountBuffer = new ArrayBuffer(8);
-    const amountView = new DataView(amountBuffer);
-    amountView.setBigUint64(0, amount, true); // little endian
-
-    const durationBuffer = new ArrayBuffer(8);
-    const durationView = new DataView(durationBuffer);
-    durationView.setBigInt64(0, BigInt(lockDuration), true); // little endian
+    const durationBuffer = Buffer.alloc(8);
+    durationBuffer.writeBigInt64LE(BigInt(lockDuration), 0);
 
     const tierBuffer = Buffer.from(tier, 'utf-8');
     const tierLenBuffer = Buffer.alloc(4);
-    new DataView(tierLenBuffer.buffer).setUint32(0, tierBuffer.length, true);
+    tierLenBuffer.writeUInt32LE(tierBuffer.length, 0);
 
     const data = Buffer.concat([
         discriminator,
-        Buffer.from(amountBuffer),
-        Buffer.from(durationBuffer),
+        amountBuffer,
+        durationBuffer,
         tierLenBuffer,
         tierBuffer
     ]);
