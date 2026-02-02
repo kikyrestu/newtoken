@@ -337,13 +337,6 @@ export const UserDashboard: React.FC = () => {
                             <p className="text-[10px] text-gray-600 mt-2">Coming soon</p>
                         </div>
                     )}
-
-                    {/* === STAKING TAB === */}
-                    {topTab === 'staking' && (
-                        <div className="h-full overflow-y-auto">
-                            <StakingPanel />
-                        </div>
-                    )}
                 </div>
             </div>
         </div>
