@@ -253,7 +253,7 @@ const MissionObserverHeroInner = () => {
                     <main className="flex-1 flex flex-col justify-start min-h-0 pointer-events-auto">
 
                         {/* CENTER DISPLAY AREA - Timer with Visual Editor */}
-                        <div className="absolute inset-0 flex items-center justify-center px-4 pointer-events-none z-[100]">
+                        <div className="absolute inset-0 flex items-center justify-center px-4 pointer-events-none z-[50]">
                             {!showSafetyModal && !showInstructionsModal ? (
                                 <TimerDevice
                                     unlockTimestamp={unlockTimestamp}
@@ -333,6 +333,10 @@ const MissionObserverHeroInner = () => {
                                                         lockedSignature={spectatorLock?.signature}
                                                         onClick={() => setActiveTierModal('spectator')}
                                                     />
+                                                    <div className="text-center space-y-1">
+                                                        <p className="text-xs text-gray-400">See the Mission Unfold</p>
+                                                        <p className="text-[10px] text-[#00ff41]">() Early participants get up to 20% discount</p>
+                                                    </div>
                                                 </div>
 
                                                 {/* Card 2: Operator */}
@@ -343,8 +347,7 @@ const MissionObserverHeroInner = () => {
                                                         isLocked={!!operatorLock}
                                                         lockedSignature={operatorLock?.signature}
                                                         onClick={() => setActiveTierModal('operator')}
-                                                    />
-                                                </div>
+                                                    </div>
 
                                                 {/* Card 3: Elite */}
                                                 <div className="flex flex-col gap-2">
@@ -354,8 +357,7 @@ const MissionObserverHeroInner = () => {
                                                         isLocked={!!eliteLock}
                                                         lockedSignature={eliteLock?.signature}
                                                         onClick={() => setActiveTierModal('elite')}
-                                                    />
-                                                </div>
+                                                    </div>
                                             </>
                                         );
                                     })()}

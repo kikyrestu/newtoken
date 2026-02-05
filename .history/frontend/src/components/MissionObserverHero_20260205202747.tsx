@@ -253,7 +253,7 @@ const MissionObserverHeroInner = () => {
                     <main className="flex-1 flex flex-col justify-start min-h-0 pointer-events-auto">
 
                         {/* CENTER DISPLAY AREA - Timer with Visual Editor */}
-                        <div className="absolute inset-0 flex items-center justify-center px-4 pointer-events-none z-[100]">
+                        <div className="absolute inset-0 flex items-center justify-center px-4 pointer-events-none z-[50]">
                             {!showSafetyModal && !showInstructionsModal ? (
                                 <TimerDevice
                                     unlockTimestamp={unlockTimestamp}
