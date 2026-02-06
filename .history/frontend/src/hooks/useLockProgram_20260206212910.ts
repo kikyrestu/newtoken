@@ -11,6 +11,7 @@ import {
 import {
     getAssociatedTokenAddress,
     createAssociatedTokenAccountInstruction,
+    createTransferInstruction,
     TOKEN_PROGRAM_ID
 } from '@solana/spl-token';
 import { useCallback, useState } from 'react';
