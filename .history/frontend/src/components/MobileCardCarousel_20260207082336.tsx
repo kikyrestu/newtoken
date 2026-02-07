@@ -31,7 +31,7 @@ const TIERS: { tier: TierType; title: string; description: string; cardNumber: s
     }
 ];
 
-export const MobileCardCarousel: React.FC<MobileCardCarouselProps> = ({ onSuccess, onCardClick, hidden = false }) => {
+export const MobileCardCarousel: React.FC<MobileCardCarouselProps> = ({ onSuccess, onCardClick }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -96,7 +96,7 @@ export const MobileCardCarousel: React.FC<MobileCardCarouselProps> = ({ onSucces
     };
 
     return (
-        <div className={`md:hidden fixed bottom-0 left-0 right-0 z-30 pointer-events-none transition-all duration-300 ${hidden ? 'opacity-0 translate-y-full pointer-events-none' : 'opacity-100 translate-y-0'}`}>
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 pointer-events-none">
             {/* Collapsed State - Swipe Up Hint */}
             <div
                 className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/95 to-transparent pt-8 pb-4 px-4 transition-all duration-500 ease-out transform pointer-events-auto
