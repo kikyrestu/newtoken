@@ -3,19 +3,30 @@
 namespace App\Http\Controllers;
 
 use App\Models\Mission;
+use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 class MissionController extends Controller
 {
     /**
-     * Verify admin token
+     * Verify admin token from database
      */
-    private function verifyAdmin(Request $request): bool
+    private function getAdminOrFail(Request $request): Admin|JsonResponse
     {
         $token = $request->header('X-Admin-Token');
-        $validToken = env('ADMIN_TOKEN', 'V4n7An3w70|<3n');
-        return $token === $validToken;
+        
+        if (!$token) {
+            return response()->json(['error' => 'No token provided'], 401);
+        }
+
+        $admin = Admin::findByToken($token);
+        
+        if (!$admin) {
+            return response()->json(['error' => 'Invalid or expired token'], 401);
+        }
+
+        return $admin;
     }
 
     /**
@@ -40,9 +51,8 @@ class MissionController extends Controller
      */
     public function adminIndex(Request $request): JsonResponse
     {
-        if (!$this->verifyAdmin($request)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
+        $adminOrError = $this->getAdminOrFail($request);
+        if ($adminOrError instanceof JsonResponse) return $adminOrError;
 
         $missions = Mission::orderBy('sort_order')
             ->orderBy('created_at', 'desc')
@@ -59,9 +69,8 @@ class MissionController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        if (!$this->verifyAdmin($request)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
+        $admin = $this->getAdminOrFail($request);
+        if ($admin instanceof JsonResponse) return $admin;
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -80,6 +89,13 @@ class MissionController extends Controller
         ]);
 
         $mission = Mission::create($validated);
+
+        // Log action
+        $admin->logAction('create_mission', [
+            'target_type' => 'Mission',
+            'target_id' => $mission->id,
+            'new_value' => $validated,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -110,15 +126,16 @@ class MissionController extends Controller
      */
     public function update(Request $request, int $id): JsonResponse
     {
-        if (!$this->verifyAdmin($request)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
+        $admin = $this->getAdminOrFail($request);
+        if ($admin instanceof JsonResponse) return $admin;
 
         $mission = Mission::find($id);
 
         if (!$mission) {
             return response()->json(['error' => 'Mission not found'], 404);
         }
+
+        $oldValue = $mission->toArray();
 
         $validated = $request->validate([
             'title' => 'sometimes|string|max:255',
@@ -139,6 +156,14 @@ class MissionController extends Controller
 
         $mission->update($validated);
 
+        // Log action
+        $admin->logAction('update_mission', [
+            'target_type' => 'Mission',
+            'target_id' => $mission->id,
+            'old_value' => $oldValue,
+            'new_value' => $validated,
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Mission updated successfully',
@@ -151,9 +176,8 @@ class MissionController extends Controller
      */
     public function destroy(Request $request, int $id): JsonResponse
     {
-        if (!$this->verifyAdmin($request)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
+        $admin = $this->getAdminOrFail($request);
+        if ($admin instanceof JsonResponse) return $admin;
 
         $mission = Mission::find($id);
 
@@ -161,7 +185,15 @@ class MissionController extends Controller
             return response()->json(['error' => 'Mission not found'], 404);
         }
 
+        $oldValue = $mission->toArray();
         $mission->delete();
+
+        // Log action
+        $admin->logAction('delete_mission', [
+            'target_type' => 'Mission',
+            'target_id' => $id,
+            'old_value' => $oldValue,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -174,9 +206,8 @@ class MissionController extends Controller
      */
     public function reorder(Request $request): JsonResponse
     {
-        if (!$this->verifyAdmin($request)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
+        $admin = $this->getAdminOrFail($request);
+        if ($admin instanceof JsonResponse) return $admin;
 
         $validated = $request->validate([
             'order' => 'required|array',
@@ -187,6 +218,11 @@ class MissionController extends Controller
         foreach ($validated['order'] as $item) {
             Mission::where('id', $item['id'])->update(['sort_order' => $item['sort_order']]);
         }
+
+        // Log action
+        $admin->logAction('reorder_missions', [
+            'new_value' => $validated['order'],
+        ]);
 
         return response()->json([
             'success' => true,

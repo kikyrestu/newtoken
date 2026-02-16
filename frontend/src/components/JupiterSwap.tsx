@@ -80,7 +80,15 @@ const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
 // Jupiter Terminal script URL
 const JUPITER_TERMINAL_SCRIPT = 'https://terminal.jup.ag/main-v2.js';
-const RPC_ENDPOINT = import.meta.env.VITE_RPC_ENDPOINT || 'https://api.mainnet-beta.solana.com';
+
+// RPC endpoints with fallbacks (S2 fix)
+const RPC_ENDPOINTS = [
+    import.meta.env.VITE_RPC_ENDPOINT,
+    'https://api.mainnet-beta.solana.com',
+    'https://solana-mainnet.g.alchemy.com/v2/demo'
+].filter(Boolean) as string[];
+
+const getRpcEndpoint = () => RPC_ENDPOINTS[0] || 'https://api.mainnet-beta.solana.com';
 
 // ============================================================================
 // COMPONENT
@@ -125,21 +133,41 @@ export const JupiterSwap: React.FC<JupiterSwapProps> = ({
         script.async = true;
 
         script.onload = () => {
-            console.log('Jupiter Terminal loaded');
+            if (import.meta.env.DEV) console.log('[JupiterSwap] Terminal loaded');
             setIsLoaded(true);
         };
 
         script.onerror = () => {
-            console.error('Failed to load Jupiter Terminal');
+            console.error('[JupiterSwap] Failed to load Jupiter Terminal');
             setError('Failed to load swap widget');
         };
 
         document.head.appendChild(script);
 
+        // S3 FIX: Cleanup script on unmount
         return () => {
-            // Cleanup not needed - script should persist
+            // Close Jupiter if it's open when component unmounts
+            if (window.Jupiter) {
+                try {
+                    window.Jupiter.close();
+                } catch { /* ignore */ }
+            }
         };
     }, []);
+
+    // ========================================================================
+    // FIX [S-1]: Re-init Jupiter when wallet changes
+    // ========================================================================
+    useEffect(() => {
+        if (isInitialized && window.Jupiter) {
+            // Close existing instance so it re-initializes with new wallet
+            try {
+                window.Jupiter.close();
+            } catch { /* ignore */ }
+            setIsInitialized(false);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [wallet]);
 
     // ========================================================================
     // Initialize Jupiter Terminal
@@ -156,7 +184,7 @@ export const JupiterSwap: React.FC<JupiterSwapProps> = ({
                 window.Jupiter!.init({
                     displayMode: 'integrated',
                     integratedTargetId: 'jupiter-terminal-container',
-                    endpoint: RPC_ENDPOINT,
+                    endpoint: getRpcEndpoint(), // S2 FIX: Use fallback-capable endpoint
 
                     formProps: {
                         initialInputMint: inputMint,
@@ -173,20 +201,20 @@ export const JupiterSwap: React.FC<JupiterSwapProps> = ({
                     passThroughWallet: wallet,
 
                     onSuccess: (txid: string) => {
-                        console.log('Swap successful:', txid);
+                        if (import.meta.env.DEV) console.log('[JupiterSwap] Swap successful:', txid);
                         onSuccess?.(txid);
                     },
 
                     onSwapError: (err: any) => {
-                        console.error('Swap error:', err);
+                        console.error('[JupiterSwap] Swap error:', err);
                         onError?.(err);
                     }
                 });
 
                 setIsInitialized(true);
-                console.log('Jupiter Terminal initialized');
+                if (import.meta.env.DEV) console.log('[JupiterSwap] Terminal initialized');
             } catch (err) {
-                console.error('Failed to initialize Jupiter:', err);
+                console.error('[JupiterSwap] Failed to initialize:', err);
                 setError('Failed to initialize swap widget');
             }
         }, 500);
@@ -286,7 +314,7 @@ export const JupiterSwapModal: React.FC<JupiterSwapModalProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 pointer-events-auto">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/80 backdrop-blur-sm"

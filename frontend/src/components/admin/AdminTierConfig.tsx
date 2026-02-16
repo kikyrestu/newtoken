@@ -8,14 +8,15 @@ interface TierConfig {
         price_usd: number;
         reward_percent: number;
         token_amount: number;
+        max_slots?: number; // Optional for backwards compatibility
         active: boolean;
     };
 }
 
 const defaultConfig: TierConfig = {
-    spectator: { name: 'Observer', price_usd: 20, reward_percent: 3, token_amount: 2000000, active: true },
-    operator: { name: 'Mission', price_usd: 120, reward_percent: 5, token_amount: 12000000, active: true },
-    elite: { name: 'Mission 1+2', price_usd: 200, reward_percent: 8, token_amount: 20000000, active: true }
+    spectator: { name: 'Observer', price_usd: 20, reward_percent: 3, token_amount: 2000000, max_slots: 1000, active: true },
+    operator: { name: 'Mission', price_usd: 120, reward_percent: 5, token_amount: 12000000, max_slots: 700, active: true },
+    elite: { name: 'Mission 1+2', price_usd: 200, reward_percent: 8, token_amount: 20000000, max_slots: 300, active: true }
 };
 
 export default function AdminTierConfig() {
@@ -160,6 +161,19 @@ export default function AdminTierConfig() {
                                     onChange={(e) => handleChange(tierId, 'token_amount', parseInt(e.target.value) || 0)}
                                     className="w-full px-3 py-2 bg-black/40 border border-[#00ff41]/20 rounded-lg text-white text-sm focus:outline-none focus:border-[#00ff41]/50"
                                 />
+                            </div>
+
+                            {/* Max Slots */}
+                            <div>
+                                <label className="block text-xs text-gray-500 mb-1">Max Slots</label>
+                                <input
+                                    type="number"
+                                    value={tier.max_slots}
+                                    onChange={(e) => handleChange(tierId, 'max_slots', parseInt(e.target.value) || 0)}
+                                    placeholder="e.g. 1000"
+                                    className="w-full px-3 py-2 bg-black/40 border border-[#00ff41]/20 rounded-lg text-white text-sm focus:outline-none focus:border-[#00ff41]/50"
+                                />
+                                <p className="text-[10px] text-gray-600 mt-1">Maximum slot limit for this tier</p>
                             </div>
                         </div>
                     </div>

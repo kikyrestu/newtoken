@@ -70,12 +70,19 @@ class LockController extends Controller
             Log::error('Error: ' . $e->getMessage());
             Log::error('File: ' . $e->getFile() . ':' . $e->getLine());
             
-            return response()->json([
+            // FIX [API-3]: Don't leak debug info in production
+            $response = [
                 'success' => false,
-                'error' => 'Unable to fetch pricing: ' . $e->getMessage(),
-                'debug_token_mint' => config('solana.token_mint'),
+                'error' => 'Unable to fetch pricing',
                 'prices' => $this->priceService->getTierPricing()
-            ], 503);
+            ];
+
+            if (config('app.env') === 'local') {
+                $response['debug_error'] = $e->getMessage();
+                $response['debug_token_mint'] = config('solana.token_mint');
+            }
+
+            return response()->json($response, 503);
         }
     }
 
@@ -110,7 +117,7 @@ class LockController extends Controller
     public function verifyLock(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'signature' => 'required|string|min:87|max:88', // Solana signatures are 87-88 chars base58
+            'signature' => 'required|string|min:86|max:88', // Solana signatures are 86-88 chars base58
             'wallet' => 'required|string|min:43|max:44', // Solana addresses are 43-44 chars base58
             'tier' => 'required|in:spectator,operator,elite'
         ]);
@@ -190,6 +197,7 @@ class LockController extends Controller
 
             DB::commit();
 
+            // FIX [L-5]: Include unlock_timestamp in response
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -197,6 +205,7 @@ class LockController extends Controller
                     'amount' => $result['amount'],
                     'escrow_pda' => $result['escrow_pda'],
                     'lock_timestamp' => Carbon::createFromTimestamp($result['lock_timestamp'])->toISOString(),
+                    'unlock_timestamp' => Carbon::createFromTimestamp($result['unlock_timestamp'])->toISOString(),
                     'solscan_url' => "https://solscan.io/tx/{$signature}" . (config('app.env') === 'local' ? '?cluster=devnet' : '')
                 ]
             ]);
@@ -296,7 +305,7 @@ class LockController extends Controller
                 'active_locks' => $activeLocks,
                 'lock_history' => $lockHistory,
                 'is_new_user' => false,
-                // Stats object for Overview tab
+                // Stats object for Overview tab - using actual model fields
                 'stats' => [
                     'mission_points' => $user->mission_points ?? 0,
                     'total_earned' => $user->total_earned ?? 0,
@@ -356,7 +365,7 @@ class LockController extends Controller
     public function verifyUnlock(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'signature' => 'required|string|min:87|max:88',
+            'signature' => 'required|string|min:86|max:88', // Solana signatures are 86-88 chars base58
             'wallet' => 'required|string|min:43|max:44',
             'lock_id' => 'required|integer', // The lock transaction ID to unlock
         ]);
@@ -420,11 +429,18 @@ class LockController extends Controller
                 ], 400);
             }
         } catch (\Exception $e) {
-            // If verification service fails, we still allow the unlock if time has passed
-            // This is a fallback for when RPC is down
-            Log::warning('Unlock verification service error, allowing time-based unlock', [
+            // SECURITY FIX (L3): Do NOT allow unlock when verification fails
+            // This prevents potential exploitation if RPC is down
+            Log::error('Unlock verification failed - RPC error, rejecting unlock', [
+                'signature' => $signature,
                 'error' => $e->getMessage()
             ]);
+            
+            return response()->json([
+                'success' => false,
+                'error' => 'Unable to verify unlock transaction. Please try again later.',
+                'retry' => true
+            ], 503);
         }
 
         // 5. Update the lock transaction status

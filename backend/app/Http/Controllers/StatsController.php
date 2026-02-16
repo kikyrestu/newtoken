@@ -44,6 +44,14 @@ class StatsController extends Controller
             0
         );
 
+        // Get tier limits from settings (configurable from admin panel)
+        $tierConfig = \App\Models\SiteSetting::get('tier_config', []);
+        $tierLimits = [
+            'observer' => $tierConfig['spectator']['max_slots'] ?? 1000,
+            'operator' => $tierConfig['operator']['max_slots'] ?? 700,
+            'elite' => $tierConfig['elite']['max_slots'] ?? 300,
+        ];
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -58,11 +66,7 @@ class StatsController extends Controller
                     'operators' => $stats[GlobalStat::KEY_TOTAL_OPERATORS] ?? 0,
                     'elite' => $stats[GlobalStat::KEY_TOTAL_ELITE] ?? 0,
                 ],
-                'tier_limits' => [
-                    'observer' => 1000,
-                    'operator' => 700,
-                    'elite' => 300,
-                ],
+                'tier_limits' => $tierLimits,
                 'recent_activity' => $recentLocks,
                 'updated_at' => now()->toISOString()
             ]

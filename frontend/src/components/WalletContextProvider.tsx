@@ -1,12 +1,9 @@
 import type { FC, ReactNode } from 'react';
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
+import { SolanaMobileWalletAdapter } from '@solana-mobile/wallet-adapter-mobile';
 // Phantom and Solflare are now Standard Wallets - no manual adapters needed
-import {
-    WalletModalProvider,
-} from '@solana/wallet-adapter-react-ui';
-import { clusterApiUrl } from '@solana/web3.js';
+// WalletModalProvider removed - using custom NoWalletModal instead
 
 // Default styles that can be overridden by your app
 import '@solana/wallet-adapter-react-ui/styles.css';
@@ -14,9 +11,14 @@ import '@solana/wallet-adapter-react-ui/styles.css';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 const DEFAULT_RPC = import.meta.env.VITE_RPC_ENDPOINT || '';
 
-console.log('[WalletContext] Module loaded');
-console.log('[WalletContext] API_BASE_URL:', API_BASE_URL);
-console.log('[WalletContext] DEFAULT_RPC from env:', DEFAULT_RPC || '(not set)');
+// Key for tracking intentional logout
+export const WALLET_DISCONNECTED_KEY = '_wallet_user_disconnected';
+
+if (import.meta.env.DEV) {
+    console.log('[WalletContext] Module loaded');
+    console.log('[WalletContext] API_BASE_URL:', API_BASE_URL);
+    console.log('[WalletContext] DEFAULT_RPC from env:', DEFAULT_RPC || '(not set)');
+}
 
 export const WalletContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     const [dynamicRpc, setDynamicRpc] = useState<string | null>(null);
@@ -66,36 +68,134 @@ export const WalletContextProvider: FC<{ children: ReactNode }> = ({ children })
         fetchConfig();
     }, []);
 
-    // Priority: Dynamic config > env variable > cluster default
+    // W4 FIX: RPC fallback array for better reliability
+    const FALLBACK_RPCS = [
+        'https://api.mainnet-beta.solana.com',
+        'https://solana-mainnet.g.alchemy.com/v2/demo'
+    ];
+
+    // Priority: Dynamic config > env variable > fallback array
     const endpoint = useMemo(() => {
         let finalEndpoint: string;
 
         if (dynamicRpc) {
             finalEndpoint = dynamicRpc;
-            console.log('[WalletContext] Using dynamic RPC endpoint:', finalEndpoint);
+            if (import.meta.env.DEV) console.log('[WalletContext] Using dynamic RPC:', finalEndpoint);
         } else if (DEFAULT_RPC) {
             finalEndpoint = DEFAULT_RPC;
-            console.log('[WalletContext] Using env RPC endpoint:', finalEndpoint);
+            if (import.meta.env.DEV) console.log('[WalletContext] Using env RPC:', finalEndpoint);
         } else {
-            finalEndpoint = clusterApiUrl(WalletAdapterNetwork.Mainnet);
-            console.log('[WalletContext] Using Solana mainnet cluster:', finalEndpoint);
+            // Use first fallback RPC instead of cluster API
+            finalEndpoint = FALLBACK_RPCS[0];
+            if (import.meta.env.DEV) console.log('[WalletContext] Using fallback RPC:', finalEndpoint);
         }
 
         return finalEndpoint;
     }, [dynamicRpc]);
 
-    // Standard wallets (Phantom, Solflare, etc.) are auto-detected
-    // Empty array = use only standard wallet adapters
+    // Include Mobile Wallet Adapter for regular mobile browsers
+    // This allows users to connect from Chrome/Safari without in-app browser
     const wallets = useMemo(() => {
-        console.log('[WalletContext] Initializing wallets array (empty = auto-detect standard wallets)');
+        if (import.meta.env.DEV) console.log('[WalletContext] Initializing wallets with Mobile Wallet Adapter');
+
+        // Only add MWA on mobile devices
+        const isMobile = typeof window !== 'undefined' &&
+            /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        if (isMobile) {
+            return [
+                new SolanaMobileWalletAdapter({
+                    addressSelector: {
+                        select: async (addresses: string[]) => addresses[0]
+                    },
+                    appIdentity: {
+                        name: 'FlyUA',
+                        uri: window.location.origin,
+                        icon: '/logo.png'
+                    },
+                    authorizationResultCache: {
+                        get: async () => {
+                            try {
+                                const cached = localStorage.getItem('mwa-auth-cache');
+                                return cached ? JSON.parse(cached) : null;
+                            } catch {
+                                return null;
+                            }
+                        },
+                        set: async (authResult) => {
+                            try {
+                                localStorage.setItem('mwa-auth-cache', JSON.stringify(authResult));
+                            } catch {
+                                // Ignore storage errors
+                            }
+                        },
+                        clear: async () => {
+                            try {
+                                localStorage.removeItem('mwa-auth-cache');
+                            } catch {
+                                // Ignore storage errors
+                            }
+                        }
+                    },
+                    chain: 'mainnet-beta' as const,
+                    onWalletNotFound: async () => {
+                        console.log('[WalletContext] No mobile wallet found');
+                    }
+                })
+            ];
+        }
+
+        // Desktop - rely on standard wallet adapters
         return [];
     }, []);
 
-    // Error handler for wallet errors
+    // Rate limit protection: track consecutive errors and disable autoConnect if rate limited
+    const errorCountRef = useRef(0);
+    const [rateLimited, setRateLimited] = useState(false);
+
+    // Error handler for wallet errors — detects rate limiting and stops retry loops
     const onError = useCallback((error: Error) => {
         console.error('[WalletContext] Wallet Error:', error.name, error.message);
-        console.error('[WalletContext] Error stack:', error.stack);
+
+        errorCountRef.current += 1;
+
+        // Detect rate limit error or too many consecutive failures
+        const isRateLimited = error.message?.toLowerCase().includes('rate limit');
+        const tooManyErrors = errorCountRef.current >= 3;
+
+        if (isRateLimited || tooManyErrors) {
+            console.warn(`[WalletContext] 🛑 Rate limit detected (errors: ${errorCountRef.current}). Disabling autoConnect for 60s.`);
+            setRateLimited(true);
+
+            // Re-enable after 60 seconds cooldown
+            setTimeout(() => {
+                console.log('[WalletContext] ✅ Cooldown expired, re-enabling autoConnect');
+                errorCountRef.current = 0;
+                setRateLimited(false);
+            }, 60000);
+        }
     }, []);
+
+    // Reset error count on successful connection
+    useEffect(() => {
+        // This effect doesn't directly observe connection, but rateLimited flag
+        // will be cleared by the timeout above
+    }, [rateLimited]);
+
+    // Check if user intentionally disconnected or rate limited - if so, don't auto-connect
+    // IMPORTANT: This must be BEFORE any early returns to satisfy React hooks rules
+    const shouldAutoConnect = useMemo(() => {
+        if (rateLimited) {
+            console.log('[WalletContext] Rate limited, autoConnect disabled');
+            return false;
+        }
+        const userDisconnected = localStorage.getItem(WALLET_DISCONNECTED_KEY);
+        if (userDisconnected === 'true') {
+            console.log('[WalletContext] User previously disconnected, autoConnect disabled');
+            return false;
+        }
+        return true;
+    }, [rateLimited]);
 
     // Don't render until config is loaded to prevent connection issues
     if (!configLoaded) {
@@ -116,12 +216,11 @@ export const WalletContextProvider: FC<{ children: ReactNode }> = ({ children })
         <ConnectionProvider endpoint={endpoint}>
             <WalletProvider
                 wallets={wallets}
-                autoConnect={false}
+                autoConnect={shouldAutoConnect}
                 onError={onError}
             >
-                <WalletModalProvider>
-                    {children}
-                </WalletModalProvider>
+                {/* No WalletModalProvider - using custom NoWalletModal in TacticalWalletButton */}
+                {children}
             </WalletProvider>
         </ConnectionProvider>
     );

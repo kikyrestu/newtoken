@@ -13,6 +13,7 @@ class StakingTransaction extends Model
     protected $fillable = [
         'wallet_address',
         'signature',
+        'claim_signature',
         'tier',
         'amount',
         'usd_value',

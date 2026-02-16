@@ -95,12 +95,8 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
                     ))}
                 </div>
 
-                {/* Footer note */}
-                <div className="mt-6 pt-4 border-t border-[#00ff41]/20">
-                    <div className="text-center text-[10px] text-gray-500 uppercase tracking-widest">
-                        :: SECURE TRANSMISSION ::
-                    </div>
-                </div>
+                {/* Footer decorative line */}
+                <div className="mt-6 pt-4 border-t border-[#00ff41]/20" />
             </div>
         </div>
     );

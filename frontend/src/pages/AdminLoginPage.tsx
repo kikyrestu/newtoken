@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
-import { Lock, AlertTriangle, Eye, EyeOff, Shield } from 'lucide-react';
+import { Lock, AlertTriangle, Eye, EyeOff, Shield, Loader2 } from 'lucide-react';
 
 const AdminLoginPage = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const { isAdminAuthenticated, adminLogin } = useAdminAuth();
+    const { isAdminAuthenticated, adminLogin, isLoading: authLoading, error: authError } = useAdminAuth();
 
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -15,6 +15,7 @@ const AdminLoginPage = () => {
     const [attempts, setAttempts] = useState(0);
     const [isLocked, setIsLocked] = useState(false);
     const [lockTimer, setLockTimer] = useState(0);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Check if form should be shown
     const showForm = searchParams.has('formLoginOpen');
@@ -43,27 +44,42 @@ const AdminLoginPage = () => {
         }
     }, [isLocked, lockTimer]);
 
-    const handleLogin = (e: React.FormEvent) => {
+    // Show auth error from context
+    useEffect(() => {
+        if (authError) {
+            setError(authError);
+        }
+    }, [authError]);
+
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (isLocked) return;
+        if (isLocked || isSubmitting) return;
 
-        const success = adminLogin(username, password);
+        setIsSubmitting(true);
+        setError('');
 
-        if (success) {
-            setError('');
-            navigate('/');
-        } else {
-            const newAttempts = attempts + 1;
-            setAttempts(newAttempts);
-            setError('Access denied. Invalid credentials.');
-            setPassword('');
+        try {
+            const success = await adminLogin(username, password);
 
-            // Lock after 5 failed attempts
-            if (newAttempts >= 5) {
-                setIsLocked(true);
-                setLockTimer(60); // 60 second lockout
+            if (success) {
+                navigate('/');
+            } else {
+                const newAttempts = attempts + 1;
+                setAttempts(newAttempts);
+                setError('Access denied. Invalid credentials.');
+                setPassword('');
+
+                // Lock after 5 failed attempts
+                if (newAttempts >= 5) {
+                    setIsLocked(true);
+                    setLockTimer(60); // 60 second lockout
+                }
             }
+        } catch (err) {
+            setError('Network error. Please try again.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -191,17 +207,18 @@ const AdminLoginPage = () => {
 
                         <button
                             type="submit"
-                            disabled={isLocked || !password}
+                            disabled={isLocked || !password || isSubmitting || authLoading}
                             className={`
                                 w-full py-3 rounded-lg font-bold text-sm tracking-wide
-                                transition-all duration-300 transform
-                                ${isLocked || !password
+                                transition-all duration-300 transform flex items-center justify-center gap-2
+                                ${isLocked || !password || isSubmitting || authLoading
                                     ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
                                     : 'bg-gradient-to-r from-red-600 to-orange-600 text-white hover:scale-[1.02] hover:shadow-lg hover:shadow-red-500/25 active:scale-[0.98]'
                                 }
                             `}
                         >
-                            {isLocked ? `LOCKED (${lockTimer}s)` : 'AUTHENTICATE'}
+                            {(isSubmitting || authLoading) && <Loader2 className="w-4 h-4 animate-spin" />}
+                            {isLocked ? `LOCKED (${lockTimer}s)` : (isSubmitting || authLoading) ? 'AUTHENTICATING...' : 'AUTHENTICATE'}
                         </button>
                     </form>
 

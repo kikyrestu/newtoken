@@ -120,7 +120,7 @@ class LockTransaction extends Model
      */
     public function getSolscanUrlAttribute(): string
     {
-        $cluster = env('DEV_MODE', false) ? '?cluster=devnet' : '';
+        $cluster = config('app.env') === 'local' ? '?cluster=devnet' : '';
         return "https://solscan.io/tx/{$this->signature}{$cluster}";
     }
 

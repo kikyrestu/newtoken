@@ -183,16 +183,26 @@ export const useStaking = () => {
     // CLAIM STAKE
     // ========================================================================
 
-    const claim = useCallback(async (stakeId: number): Promise<{ success: boolean; payout?: any; error?: string }> => {
+    const claim = useCallback(async (
+        stakeId: number,
+        claimSignature: string
+    ): Promise<{ success: boolean; payout?: any; error?: string }> => {
         if (!wallet) {
             return { success: false, error: 'Wallet not connected' };
+        }
+
+        if (!claimSignature) {
+            return { success: false, error: 'Claim signature is required' };
         }
 
         try {
             const res = await fetch(`${API_BASE_URL}/staking/${stakeId}/claim`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ wallet }),
+                body: JSON.stringify({
+                    wallet,
+                    claim_signature: claimSignature,
+                }),
             });
             const data = await res.json();
 

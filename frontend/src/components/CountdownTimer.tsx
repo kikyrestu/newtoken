@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useConnection } from '@solana/wallet-adapter-react';
 
 interface CountdownTimerProps {
@@ -65,6 +65,7 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
     });
     const [blockchainTime, setBlockchainTime] = useState<number | null>(null);
     const [synced, setSynced] = useState(false);
+    const completedRef = useRef(false);
 
     // ========================================================================
     // Blockchain Time Sync
@@ -85,11 +86,20 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
             // Check if RPC endpoint seems valid first
             const rpcEndpoint = connection.rpcEndpoint;
 
-            // Skip RPC sync for mainnet (usually blocked from browser)
-            // Also skip if endpoint contains known problematic hosts
-            if (rpcEndpoint.includes('mainnet-beta.solana.com') ||
-                rpcEndpoint.includes('api.mainnet')) {
-                // Mainnet public RPC blocks browser requests - use local time
+            // FIX [T-1]: Only skip specific public Solana RPCs that block browser requests.
+            // Custom RPCs (Helius, QuickNode, etc.) with 'mainnet' in URL should NOT be skipped.
+            try {
+                const rpcHost = new URL(rpcEndpoint).hostname;
+                const blockedHosts = [
+                    'api.mainnet-beta.solana.com',
+                    'mainnet-beta.solana.com',
+                ];
+                if (blockedHosts.includes(rpcHost)) {
+                    useFallback();
+                    return;
+                }
+            } catch {
+                // Invalid URL — fallback
                 useFallback();
                 return;
             }
@@ -136,7 +146,10 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
 
             if (diff <= 0) {
                 setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 });
-                onComplete?.();
+                if (!completedRef.current) {
+                    completedRef.current = true;
+                    onComplete?.();
+                }
                 return;
             }
 

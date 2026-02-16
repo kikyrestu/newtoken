@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
 
 class AppSetting extends Model
 {
@@ -17,6 +19,21 @@ class AppSetting extends Model
      * Cache duration in seconds
      */
     protected static int $cacheDuration = 300; // 5 minutes
+
+    /**
+     * Prefix for encrypted values
+     */
+    public const ENCRYPTED_PREFIX = 'ENC:';
+
+    /**
+     * Fields that support encryption
+     */
+    public static array $sensitiveFields = [
+        'program_id',
+        'token_mint',
+        'rpc_url',
+        'rpc_url_mainnet',
+    ];
 
     /**
      * Get a setting value by key
@@ -70,6 +87,46 @@ class AppSetting extends Model
         Cache::forget('app_settings_public');
 
         return $result;
+    }
+
+    /**
+     * Set a setting value with encryption (for sensitive fields)
+     */
+    public static function setEncrypted(string $key, mixed $value): bool
+    {
+        if (!in_array($key, self::$sensitiveFields)) {
+            Log::warning("Attempted to encrypt non-sensitive field: {$key}");
+            return self::set($key, $value);
+        }
+
+        if (empty($value)) {
+            return self::set($key, $value);
+        }
+
+        // Don't double-encrypt
+        if (is_string($value) && str_starts_with($value, self::ENCRYPTED_PREFIX)) {
+            return self::set($key, $value);
+        }
+
+        try {
+            $encryptedValue = self::ENCRYPTED_PREFIX . Crypt::encryptString((string)$value);
+            return self::set($key, $encryptedValue);
+        } catch (\Exception $e) {
+            Log::error("Failed to encrypt setting {$key}: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Check if a setting value is encrypted
+     */
+    public static function isEncrypted(string $key): bool
+    {
+        $setting = self::find($key);
+        if (!$setting || !$setting->value) {
+            return false;
+        }
+        return str_starts_with($setting->value, self::ENCRYPTED_PREFIX);
     }
 
     /**
@@ -146,6 +203,17 @@ class AppSetting extends Model
     {
         if ($value === null) {
             return null;
+        }
+
+        // Auto-decrypt if value has encryption prefix
+        if (str_starts_with($value, self::ENCRYPTED_PREFIX)) {
+            try {
+                $encryptedPart = substr($value, strlen(self::ENCRYPTED_PREFIX));
+                $value = Crypt::decryptString($encryptedPart);
+            } catch (\Exception $e) {
+                Log::error('Failed to decrypt setting value: ' . $e->getMessage());
+                return null;
+            }
         }
 
         return match ($type) {

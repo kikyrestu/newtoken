@@ -16,11 +16,10 @@ use App\Http\Controllers\SettingsController;
 // Health check
 Route::get('/health', [StatsController::class, 'healthCheck']);
 
-// Site Settings (public read, admin write)
+// Site Settings (public read ONLY)
 Route::get('/settings', [SettingsController::class, 'getMultiple']);
 Route::get('/settings/{key}', [SettingsController::class, 'get']);
-Route::put('/settings/{key}', [SettingsController::class, 'update']);
-Route::delete('/settings/{key}', [SettingsController::class, 'delete']);
+// SECURITY FIX [API-1]: PUT/DELETE moved to admin group below (were previously public)
 
 // Public routes
 Route::get('/pricing', [LockController::class, 'getPricing']);
@@ -54,8 +53,17 @@ Route::middleware('auth:sanctum')->group(function () {
 // Legacy burn callback (existing)
 Route::post('/burn-callback', [BurnController::class, 'burnCallback']);
 
-// Admin Routes (token auth in controller)
-Route::prefix('admin')->group(function () {
+// Admin Authentication Routes (no auth middleware — these are login/logout/verify)
+Route::prefix('admin/auth')->group(function () {
+    Route::post('/login', [\App\Http\Controllers\AdminAuthController::class, 'login'])
+        ->middleware('throttle:5,1'); // 5 attempts per minute
+    Route::post('/logout', [\App\Http\Controllers\AdminAuthController::class, 'logout']);
+    Route::get('/verify', [\App\Http\Controllers\AdminAuthController::class, 'verify']);
+});
+
+// SECURITY FIX [API-2]: All admin routes now protected by admin.auth middleware at route level
+Route::prefix('admin')->middleware(['admin.auth', 'throttle:60,1'])->group(function () {
+    // Dashboard & Stats
     Route::get('/overview', [\App\Http\Controllers\AdminController::class, 'getOverview']);
     Route::get('/stats/detailed', [\App\Http\Controllers\AdminController::class, 'getDetailedStats']);
     Route::get('/users', [\App\Http\Controllers\AdminController::class, 'getUsers']);
@@ -64,7 +72,11 @@ Route::prefix('admin')->group(function () {
     Route::get('/tier-config', [\App\Http\Controllers\AdminController::class, 'getTierConfig']);
     Route::put('/tier-config', [\App\Http\Controllers\AdminController::class, 'updateTierConfig']);
     Route::get('/all-settings', [\App\Http\Controllers\AdminController::class, 'getAllSettings']);
-    
+
+    // Site Settings (write operations — FIX for [API-1])
+    Route::put('/settings/{key}', [SettingsController::class, 'update']);
+    Route::delete('/settings/{key}', [SettingsController::class, 'delete']);
+
     // App Settings (Network, Token, Features)
     Route::get('/app-settings', [\App\Http\Controllers\AppSettingsController::class, 'index']);
     Route::post('/app-settings', [\App\Http\Controllers\AppSettingsController::class, 'update']);
@@ -72,12 +84,23 @@ Route::prefix('admin')->group(function () {
     Route::post('/app-settings/clear-cache', [\App\Http\Controllers\AppSettingsController::class, 'clearCache']);
     Route::post('/app-settings/switch-network', [\App\Http\Controllers\AppSettingsController::class, 'switchNetwork']);
 
+    // Encryption endpoints for sensitive config fields
+    Route::post('/app-settings/{key}/encrypt', [\App\Http\Controllers\AppSettingsController::class, 'encryptField']);
+    Route::get('/app-settings/{key}/encrypted', [\App\Http\Controllers\AppSettingsController::class, 'isEncrypted']);
+
     // Mission Management (Admin CRUD)
     Route::get('/missions', [\App\Http\Controllers\MissionController::class, 'adminIndex']);
     Route::post('/missions', [\App\Http\Controllers\MissionController::class, 'store']);
     Route::put('/missions/{id}', [\App\Http\Controllers\MissionController::class, 'update']);
     Route::delete('/missions/{id}', [\App\Http\Controllers\MissionController::class, 'destroy']);
     Route::post('/missions/reorder', [\App\Http\Controllers\MissionController::class, 'reorder']);
+
+    // Staking admin routes (deduplicated — FIX for [SK-3])
+    Route::get('/staking', [\App\Http\Controllers\StakingController::class, 'adminList']);
+    Route::get('/staking/stats', [\App\Http\Controllers\StakingController::class, 'adminStats']);
+
+    // Audit logs
+    Route::get('/audit-logs', [\App\Http\Controllers\AdminController::class, 'getAuditLogs']);
 });
 
 // Public app settings (for frontend)
@@ -102,9 +125,3 @@ Route::post('/staking/stake', [\App\Http\Controllers\StakingController::class, '
     ->middleware('throttle:10,1');
 Route::post('/staking/{id}/claim', [\App\Http\Controllers\StakingController::class, 'claim'])
     ->middleware('throttle:10,1');
-
-// Admin staking routes
-Route::prefix('admin')->group(function () {
-    Route::get('/staking', [\App\Http\Controllers\StakingController::class, 'adminList']);
-    Route::get('/staking/stats', [\App\Http\Controllers\StakingController::class, 'adminStats']);
-});

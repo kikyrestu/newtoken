@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\StakingTransaction;
+use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
@@ -10,6 +11,30 @@ use Carbon\Carbon;
 
 class StakingController extends Controller
 {
+    // ========================================================================
+    // ADMIN AUTH HELPER
+    // ========================================================================
+
+    /**
+     * Verify admin token from database
+     */
+    private function getAdminOrFail(Request $request): Admin|JsonResponse
+    {
+        $token = $request->header('X-Admin-Token');
+        
+        if (!$token) {
+            return response()->json(['error' => 'No token provided'], 401);
+        }
+
+        $admin = Admin::findByToken($token);
+        
+        if (!$admin) {
+            return response()->json(['error' => 'Invalid or expired token'], 401);
+        }
+
+        return $admin;
+    }
+
     // ========================================================================
     // PUBLIC ENDPOINTS
     // ========================================================================
@@ -141,10 +166,10 @@ class StakingController extends Controller
     public function stake(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'wallet' => 'required|string|size:44',
+            'wallet' => 'required|string|min:43|max:44', // Solana addresses are 43-44 chars base58
             'tier' => 'required|integer|in:1,2,3',
             'amount' => 'required|numeric|min:0.000001',
-            'signature' => 'required|string|max:128',
+            'signature' => 'required|string|min:86|max:88', // Solana signatures are 86-88 chars base58
             'usd_value' => 'nullable|numeric|min:0',
         ]);
 
@@ -153,14 +178,6 @@ class StakingController extends Controller
                 'success' => false,
                 'error' => $validator->errors()->first(),
             ], 422);
-        }
-
-        // Check if signature already used
-        if (StakingTransaction::where('signature', $request->signature)->exists()) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Transaction signature already used',
-            ], 409);
         }
 
         $tier = (int) $request->tier;
@@ -176,50 +193,113 @@ class StakingController extends Controller
             ], 400);
         }
 
-        // Calculate reward
-        $reward = StakingTransaction::calculateReward(
-            $amount,
-            $tierInfo['lock_days'],
-            $tierInfo['apr_percent']
-        );
+        // FIX [SK-2]: Verify stake transaction on-chain before recording
+        try {
+            $solana = new \App\Services\SolanaListenerService();
+            $verification = $this->verifyClaimTransaction(
+                $solana,
+                $request->signature,
+                $request->wallet
+            );
 
-        $stakedAt = now();
-        $unlocksAt = $stakedAt->copy()->addDays($tierInfo['lock_days']);
+            if (!$verification['valid']) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'On-chain verification failed: ' . ($verification['error'] ?? 'Unknown'),
+                ], 400);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Stake on-chain verification failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to verify stake transaction on-chain',
+            ], 500);
+        }
 
-        $stake = StakingTransaction::create([
-            'wallet_address' => $request->wallet,
-            'signature' => $request->signature,
-            'tier' => $tier,
-            'amount' => $amount,
-            'usd_value' => $usdValue,
-            'lock_days' => $tierInfo['lock_days'],
-            'apr_percent' => $tierInfo['apr_percent'],
-            'reward_amount' => $reward,
-            'staked_at' => $stakedAt,
-            'unlocks_at' => $unlocksAt,
-            'status' => 'active',
-        ]);
+        // Use DB transaction to prevent race condition on signature check
+        try {
+            \DB::beginTransaction();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Stake created successfully',
-            'stake' => $stake->toApiArray(),
-        ], 201);
+            // Double check signature inside transaction to prevent race condition
+            if (StakingTransaction::where('signature', $request->signature)->exists()) {
+                \DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Transaction signature already used',
+                ], 409);
+            }
+
+            // Calculate reward
+            $reward = StakingTransaction::calculateReward(
+                $amount,
+                $tierInfo['lock_days'],
+                $tierInfo['apr_percent']
+            );
+
+            $stakedAt = now();
+            $unlocksAt = $stakedAt->copy()->addDays($tierInfo['lock_days']);
+
+            $stake = StakingTransaction::create([
+                'wallet_address' => $request->wallet,
+                'signature' => $request->signature,
+                'tier' => $tier,
+                'amount' => $amount,
+                'usd_value' => $usdValue,
+                'lock_days' => $tierInfo['lock_days'],
+                'apr_percent' => $tierInfo['apr_percent'],
+                'reward_amount' => $reward,
+                'staked_at' => $stakedAt,
+                'unlocks_at' => $unlocksAt,
+                'status' => 'active',
+            ]);
+
+            \DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Stake created successfully',
+                'stake' => $stake->toApiArray(),
+            ], 201);
+
+        } catch (\Illuminate\Database\QueryException $e) {
+            \DB::rollBack();
+            // Handle unique constraint violation (duplicate signature)
+            if ($e->getCode() == '23000') {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Transaction signature already used',
+                ], 409);
+            }
+            throw $e;
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            \Log::error('Stake creation failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to create stake',
+            ], 500);
+        }
     }
 
     /**
      * Claim a matured stake
+     * SECURITY FIX [SK-1]: Now requires on-chain verification
      */
     public function claim(Request $request, int $id): JsonResponse
     {
-        $wallet = $request->input('wallet');
+        $validator = Validator::make($request->all(), [
+            'wallet' => 'required|string|min:43|max:44',
+            'claim_signature' => 'required|string|min:86|max:88',
+        ]);
 
-        if (!$wallet) {
+        if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'error' => 'Wallet address required',
-            ], 400);
+                'error' => $validator->errors()->first(),
+            ], 422);
         }
+
+        $wallet = $request->input('wallet');
 
         $stake = StakingTransaction::where('id', $id)
             ->where('wallet_address', $wallet)
@@ -241,10 +321,43 @@ class StakingController extends Controller
             ], 400);
         }
 
+        // Verify claim signature not already used
+        $existingClaim = StakingTransaction::where('claim_signature', $request->claim_signature)->first();
+        if ($existingClaim) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Claim signature already used',
+            ], 409);
+        }
+
+        // On-chain verification: verify the claim transaction
+        try {
+            $solana = new \App\Services\SolanaListenerService();
+            $verification = $this->verifyClaimTransaction(
+                $solana,
+                $request->claim_signature,
+                $wallet
+            );
+
+            if (!$verification['valid']) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'On-chain verification failed: ' . ($verification['error'] ?? 'Unknown'),
+                ], 400);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Claim on-chain verification failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to verify claim transaction on-chain',
+            ], 500);
+        }
+
         // Mark as claimed
         $stake->update([
             'status' => 'claimed',
             'claimed_at' => now(),
+            'claim_signature' => $request->claim_signature,
         ]);
 
         return response()->json([
@@ -259,6 +372,81 @@ class StakingController extends Controller
         ]);
     }
 
+    /**
+     * Verify a claim transaction on-chain
+     * Checks that the transaction was successful and the wallet was a signer
+     */
+    private function verifyClaimTransaction(
+        \App\Services\SolanaListenerService $solana,
+        string $signature,
+        string $wallet
+    ): array {
+        try {
+            $http = \Illuminate\Support\Facades\Http::timeout(30);
+            if (config('app.env') === 'local') {
+                $http->withoutVerifying();
+            }
+
+            $rpcEndpoint = \App\Models\AppSetting::get('rpc_url', '')
+                ?: config('solana.rpc_endpoint', 'https://api.mainnet-beta.solana.com');
+
+            $response = $http->post($rpcEndpoint, [
+                'jsonrpc' => '2.0',
+                'id' => 1,
+                'method' => 'getTransaction',
+                'params' => [
+                    $signature,
+                    [
+                        'encoding' => 'jsonParsed',
+                        'commitment' => 'confirmed',
+                        'maxSupportedTransactionVersion' => 0
+                    ]
+                ]
+            ]);
+
+            if (!$response->successful()) {
+                return ['valid' => false, 'error' => 'RPC request failed'];
+            }
+
+            $result = $response->json();
+
+            if (isset($result['error'])) {
+                return ['valid' => false, 'error' => $result['error']['message'] ?? 'RPC error'];
+            }
+
+            if (!isset($result['result'])) {
+                return ['valid' => false, 'error' => 'Transaction not found'];
+            }
+
+            $tx = $result['result'];
+
+            // Check transaction succeeded
+            if (($tx['meta']['err'] ?? null) !== null) {
+                return ['valid' => false, 'error' => 'Transaction failed on-chain'];
+            }
+
+            // Verify wallet was a signer
+            $accountKeys = $tx['transaction']['message']['accountKeys'] ?? [];
+            $walletSigned = false;
+            foreach ($accountKeys as $account) {
+                $pubkey = is_array($account) ? ($account['pubkey'] ?? '') : $account;
+                $signer = is_array($account) ? ($account['signer'] ?? false) : false;
+                if ($pubkey === $wallet && $signer) {
+                    $walletSigned = true;
+                    break;
+                }
+            }
+
+            if (!$walletSigned) {
+                return ['valid' => false, 'error' => 'Wallet was not a signer'];
+            }
+
+            return ['valid' => true];
+        } catch (\Exception $e) {
+            return ['valid' => false, 'error' => $e->getMessage()];
+        }
+    }
+
     // ========================================================================
     // ADMIN ENDPOINTS
     // ========================================================================
@@ -268,6 +456,9 @@ class StakingController extends Controller
      */
     public function adminList(Request $request): JsonResponse
     {
+        $adminOrError = $this->getAdminOrFail($request);
+        if ($adminOrError instanceof JsonResponse) return $adminOrError;
+
         $query = StakingTransaction::query();
 
         if ($status = $request->input('status')) {
@@ -302,8 +493,11 @@ class StakingController extends Controller
     /**
      * Get staking stats (admin)
      */
-    public function adminStats(): JsonResponse
+    public function adminStats(Request $request): JsonResponse
     {
+        $adminOrError = $this->getAdminOrFail($request);
+        if ($adminOrError instanceof JsonResponse) return $adminOrError;
+
         return response()->json([
             'success' => true,
             'stats' => [

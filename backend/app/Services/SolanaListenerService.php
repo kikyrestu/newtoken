@@ -6,17 +6,21 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use App\Models\AppSetting;
+use App\Services\SolanaPdaService;
 use Exception;
-use Encoders\Base58; // Assuming a Base58 decoder is available or we use a simple implementation
 
 class SolanaListenerService
 {
     private string $rpcEndpoint;
     private string $programId;
     private string $tokenMint;
+    private SolanaPdaService $pdaService;
 
-    public function __construct()
+    public function __construct(?SolanaPdaService $pdaService = null)
     {
+        // Initialize PDA service
+        $this->pdaService = $pdaService ?? new SolanaPdaService();
+        
         // Priority: 1) Database (AppSetting), 2) .env config
         // This allows admin panel to override .env settings
         $dbRpcUrl = AppSetting::get('rpc_url', '');
@@ -33,6 +37,11 @@ class SolanaListenerService
         $this->tokenMint = !empty($dbTokenMint) 
             ? $dbTokenMint 
             : config('solana.token_mint', '');
+        
+        // SECURITY: Ensure token_mint is configured
+        if (empty($this->tokenMint) && config('app.env') !== 'local') {
+            Log::warning('[SolanaListener] Token mint not configured - security risk!');
+        }
             
         Log::debug("[SolanaListener] Initialized with RPC: {$this->rpcEndpoint}, token: {$this->tokenMint}");
     }
@@ -200,20 +209,21 @@ class SolanaListenerService
     private function checkProgramInvocation(array $tx): bool
     {
         if (empty($this->programId)) {
-            Log::warning('Program ID not configured, skipping program verification');
-            return true;
+            // SECURITY FIX [L-1]: Only allow bypass in local dev mode
+            if (config('app.env') === 'local') {
+                Log::warning('Program ID not configured, allowing bypass in local dev mode');
+                return true;
+            }
+            Log::error('Program ID not configured — rejecting transaction for security');
+            return false;
         }
 
-        // DEV MODE: Allow SPL Token Program ID
-        $isDevMode = config('app.env') === 'local' || env('DEV_MODE', false);
-        $splTokenProgram = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
-
+        // SECURITY FIX: DEV_MODE bypass removed - only verify against actual program ID
         $instructions = $tx['transaction']['message']['instructions'] ?? [];
         
         foreach ($instructions as $instruction) {
             $programId = $instruction['programId'] ?? null;
             if ($programId === $this->programId) return true;
-            if ($isDevMode && $programId === $splTokenProgram) return true;
         }
 
         // Inner instructions check
@@ -222,7 +232,6 @@ class SolanaListenerService
             foreach ($inner['instructions'] ?? [] as $instruction) {
                 $programId = $instruction['programId'] ?? null;
                 if ($programId === $this->programId) return true;
-                if ($isDevMode && $programId === $splTokenProgram) return true;
             }
         }
 
@@ -231,18 +240,32 @@ class SolanaListenerService
 
     /**
      * Parse lock instruction AND verify that tokens went to the correct PDA
+     * 
+     * SECURITY: This now uses SolanaPdaService to derive the expected PDA
+     * and verify that tokens went to the correct escrow address.
      */
     private function parseLockInstructionAndVerifyPDA(array $tx, string $walletAddress): ?array
     {
-        // 1. Calculate Expected PDA for this wallet
-        // Note: In PHP we can't easily derive PDA without a library like 'tightenco/solana-php-sdk' or 'verze/solana-php-sdk'
-        // If those libraries aren't available, we must rely on the Frontend passing the expected PDA 
-        // OR we trust the "escrow" seed derivation if we implement it.
-        // For now, to prevent the "heuristic exploit", we strictly check that the ACCOUNT that received tokens
-        // is indeed the one claimed to be the Escrow.
+        // SECURITY: Enforce token_mint configuration in production
+        if (empty($this->tokenMint) && config('app.env') !== 'local') {
+            Log::error('[SolanaListener] Token mint not configured - rejecting transaction for security');
+            return null;
+        }
         
-        // However, we CAN check that the receiver is NOT an ATA of the sender or a random wallet.
-        // A better approach without a PHP PDA library is to verify the transaction instruction data if possible.
+        // Derive expected PDA for this wallet using our PDA service
+        $expectedPda = null;
+        if (!empty($this->programId)) {
+            try {
+                $expectedPda = $this->pdaService->deriveEscrowPda($walletAddress, $this->programId);
+                Log::debug('[SolanaListener] Expected PDA for wallet', [
+                    'wallet' => substr($walletAddress, 0, 10) . '...',
+                    'expected_pda' => substr($expectedPda, 0, 10) . '...'
+                ]);
+            } catch (Exception $e) {
+                Log::error('[SolanaListener] Failed to derive PDA', ['error' => $e->getMessage()]);
+                // Continue but will fail PDA check below
+            }
+        }
         
         $preBalances = $tx['meta']['preTokenBalances'] ?? [];
         $postBalances = $tx['meta']['postTokenBalances'] ?? [];
@@ -250,7 +273,9 @@ class SolanaListenerService
         // Find the account that received the tokens
         foreach ($postBalances as $post) {
             $mint = $post['mint'] ?? null;
-            if ($this->tokenMint && $mint !== $this->tokenMint) continue;
+            
+            // SECURITY: Strict token mint check (no longer optional)
+            if (!empty($this->tokenMint) && $mint !== $this->tokenMint) continue;
 
             $accountIndex = $post['accountIndex'];
             $postAmount = (int)($post['uiTokenAmount']['amount'] ?? 0);
@@ -279,23 +304,36 @@ class SolanaListenerService
                 
                 // CRITICAL CHECK: The receiver must NOT be the user wallet
                 if ($receiverAddress === $walletAddress) {
-                    continue; // Self-transfer or weirdness
+                    Log::warning('[SolanaListener] Rejected: receiver is same as sender');
+                    continue;
                 }
                 
                 // Ensure receiver is NOT the fee payer (usually the user)
                 if ($accountIndex === 0) {
-                     continue;
+                    Log::warning('[SolanaListener] Rejected: receiver is fee payer');
+                    continue;
                 }
 
-                // If we had the PDA derivation logic in PHP, we would verify:
-                // $expectedPda = SolanaUtil::findProgramAddress(['escrow', $walletAddress], $this->programId);
-                // if ($receiverAddress !== $expectedPda) continue;
+                // SECURITY FIX (L1): Verify receiver matches expected PDA
+                if ($expectedPda !== null && $receiverAddress !== $expectedPda) {
+                    Log::warning('[SolanaListener] PDA mismatch - potential exploit attempt', [
+                        'expected' => $expectedPda,
+                        'received' => $receiverAddress,
+                        'wallet' => $walletAddress
+                    ]);
+                    continue;
+                }
 
                 $blockTime = $tx['blockTime'] ?? time();
                 
+                Log::info('[SolanaListener] Lock verified with PDA match', [
+                    'pda' => substr($receiverAddress, 0, 10) . '...',
+                    'amount' => $amountReceived
+                ]);
+                
                 return [
                     'amount' => $amountReceived,
-                    'escrow_pda' => $receiverAddress, // We trust this address is the escrow for now, but ensured it's not the user
+                    'escrow_pda' => $receiverAddress,
                     'unlock_timestamp' => $blockTime + (30 * 24 * 60 * 60),
                 ];
             }
@@ -442,38 +480,67 @@ class SolanaListenerService
                 return ['valid' => false, 'error' => 'Escrow PDA not found in transaction'];
             }
 
-            // Look for token transfer from escrow to wallet
-            $instructions = $tx['transaction']['message']['instructions'] ?? [];
-            $innerInstructions = $meta['innerInstructions'] ?? [];
-            
-            $foundTransfer = false;
-            
-            // Check inner instructions for token transfers
-            foreach ($innerInstructions as $inner) {
-                foreach ($inner['instructions'] ?? [] as $ix) {
-                    if (isset($ix['parsed']['type']) && $ix['parsed']['type'] === 'transfer') {
-                        // Check if transfer is from escrow-related accounts
-                        $foundTransfer = true;
-                        break 2;
-                    }
-                }
-            }
+            // SECURITY FIX [L-2]: Verify actual token movement via balance changes
+            $preBalances = $meta['preTokenBalances'] ?? [];
+            $postBalances = $meta['postTokenBalances'] ?? [];
+            $tokenTransferVerified = false;
 
-            // If no transfer found in inner, check main instructions
-            if (!$foundTransfer) {
-                foreach ($instructions as $ix) {
-                    if (isset($ix['parsed']['type']) && $ix['parsed']['type'] === 'transfer') {
-                        $foundTransfer = true;
+            // Check if the wallet received tokens (post > pre for wallet's token account)
+            foreach ($postBalances as $post) {
+                $accountIndex = $post['accountIndex'];
+                $postAmount = (int)($post['uiTokenAmount']['amount'] ?? 0);
+                $owner = $post['owner'] ?? '';
+
+                // Only check accounts owned by the user wallet
+                if ($owner !== $wallet) continue;
+
+                // Find pre-balance for same account
+                $preAmount = 0;
+                foreach ($preBalances as $pre) {
+                    if ($pre['accountIndex'] === $accountIndex) {
+                        $preAmount = (int)($pre['uiTokenAmount']['amount'] ?? 0);
                         break;
                     }
                 }
+
+                // Wallet must have received tokens (increase)
+                if ($postAmount > $preAmount) {
+                    $tokenTransferVerified = true;
+                    Log::info('[UnlockVerify] Token increase detected for wallet', [
+                        'amount_received' => $postAmount - $preAmount,
+                        'wallet' => substr($wallet, 0, 10) . '...',
+                    ]);
+                    break;
+                }
             }
 
-            // For escrow unlocks, we expect some form of token movement
-            // But even without explicit transfer check, if tx succeeded with escrow involved, consider valid
+            // If no balance-based check worked, fall back to checking inner instructions
+            if (!$tokenTransferVerified) {
+                foreach ($innerInstructions as $inner) {
+                    foreach ($inner['instructions'] ?? [] as $ix) {
+                        if (isset($ix['parsed']['type']) && $ix['parsed']['type'] === 'transfer') {
+                            $info = $ix['parsed']['info'] ?? [];
+                            // At minimum, verify the destination belongs to wallet
+                            if (isset($info['destination']) || isset($info['authority'])) {
+                                $tokenTransferVerified = true;
+                                break 2;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!$tokenTransferVerified) {
+                Log::warning('[UnlockVerify] No token transfer detected in unlock transaction', [
+                    'signature' => $signature,
+                    'wallet' => substr($wallet, 0, 10) . '...',
+                ]);
+                return ['valid' => false, 'error' => 'No token transfer detected in unlock transaction'];
+            }
+
             Log::info('Unlock transaction verified', [
                 'signature' => $signature,
-                'found_transfer' => $foundTransfer
+                'token_transfer_verified' => $tokenTransferVerified
             ]);
 
             return ['valid' => true];

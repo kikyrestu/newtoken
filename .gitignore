@@ -1,0 +1,31 @@
+# Environment files (sensitive)
+.env
+backend/.env
+frontend/.env.production.backup
+
+# Dependencies
+node_modules/
+vendor/
+
+# Build output
+frontend/dist/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker volumes
+mysql_data/
+
+# Logs
+*.log
+storage/logs/
+
+# Misc
+get-docker.sh

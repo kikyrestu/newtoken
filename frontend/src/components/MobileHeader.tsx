@@ -37,21 +37,33 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
         <header className="md:hidden flex flex-col gap-2 p-2 pointer-events-auto">
             {/* Row 1: Logo + Wallet */}
             <div className="flex items-center justify-between">
-                {/* Logo */}
-                <div className="flex items-center gap-2">
+                {/* Logo - Same as desktop (FLY + Drone + UA) */}
+                <div className="flex items-center gap-1">
+                    <img
+                        src="/assets/fly-text.png"
+                        alt="FLY"
+                        className="h-6 object-contain"
+                        style={{
+                            filter: 'drop-shadow(0 0 6px rgba(0,255,65,0.6)) brightness(0) invert(1)',
+                        }}
+                    />
                     <img
                         src="/logo.png"
-                        alt="Mission Launchpad"
-                        className="w-10 h-10 object-contain"
+                        alt="Drone"
+                        className="w-10 h-10 object-contain drop-shadow-[0_0_10px_rgba(0,255,65,0.5)]"
                     />
-                    <div className="font-mono">
-                        <div className="text-[#00ff41] text-xs font-bold tracking-wider">MISSION</div>
-                        <div className="text-[#00ff41]/70 text-[10px] tracking-widest">LAUNCHPAD</div>
-                    </div>
+                    <img
+                        src="/assets/ua-text.png"
+                        alt="UA"
+                        className="h-6 object-contain"
+                        style={{
+                            filter: 'drop-shadow(0 0 6px rgba(0,255,65,0.6)) brightness(0) invert(1)',
+                        }}
+                    />
                 </div>
 
-                {/* Wallet Button */}
-                <TacticalWalletButton />
+                {/* Wallet Button - Compact for mobile */}
+                <TacticalWalletButton compact />
             </div>
 
             {/* Row 2: Action Pills */}

@@ -34,7 +34,16 @@ export const StakingPanel: React.FC = () => {
     const handleClaim = async (stakeId: number) => {
         setClaimingId(stakeId);
         try {
-            const result = await claim(stakeId);
+            // TODO: In production, this would:
+            // 1. Initiate on-chain claim transaction via wallet
+            // 2. Get the transaction signature
+            // 3. Pass signature to claim() for backend verification
+            // For now, show a placeholder message
+            const claimSignature = prompt('Enter your claim transaction signature:');
+            if (!claimSignature) {
+                return;
+            }
+            const result = await claim(stakeId, claimSignature);
             if (!result.success) {
                 alert(result.error || 'Failed to claim');
             }

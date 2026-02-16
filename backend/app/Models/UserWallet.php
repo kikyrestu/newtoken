@@ -16,12 +16,24 @@ class UserWallet extends Model
         'total_locked_amount',
         'missions_completed',
         'first_lock_at',
+        // Stats fields
+        'mission_points',
+        'total_earned',
+        'total_burned',
+        'missions_canceled',
+        'missions_failed',
     ];
 
     protected $casts = [
         'total_locked_amount' => 'integer',
         'missions_completed' => 'integer',
         'first_lock_at' => 'datetime',
+        // Stats fields
+        'mission_points' => 'integer',
+        'total_earned' => 'integer',
+        'total_burned' => 'integer',
+        'missions_canceled' => 'integer',
+        'missions_failed' => 'integer',
     ];
 
     /**

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useBlockchainConfig, type BlockchainConfig } from '../../hooks/useBlockchainConfig';
+import { useAdminAuth } from '../../context/AdminAuthContext';
 import {
     Save,
     RotateCcw,
@@ -15,8 +16,13 @@ import {
     ChevronDown,
     ChevronUp,
     ExternalLink,
-    Copy
+    Copy,
+    Lock,
+    LockOpen,
+    Loader2
 } from 'lucide-react';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 // Tooltip component for inline explanations
 function Tooltip({ children, content }: { children: React.ReactNode; content: string }) {
@@ -83,6 +89,105 @@ function CopyButton({ text }: { text: string }) {
     return (
         <button onClick={handleCopy} className="p-1 hover:bg-[#00ff41]/20 rounded transition-colors">
             {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4 text-gray-500" />}
+        </button>
+    );
+}
+
+// Encrypt button for sensitive fields
+function EncryptButton({ fieldKey, hasValue, onEncrypted }: {
+    fieldKey: string;
+    hasValue: boolean;
+    onEncrypted?: () => void;
+}) {
+    const { adminToken } = useAdminAuth();
+    const [encrypted, setEncrypted] = useState<boolean | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [checking, setChecking] = useState(true);
+
+    // Check encryption status on mount
+    useEffect(() => {
+        const checkStatus = async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/app-settings/${fieldKey}/encrypted`, {
+                    headers: { 'X-Admin-Token': adminToken || '' }
+                });
+                const data = await response.json();
+                setEncrypted(data.encrypted ?? false);
+            } catch {
+                setEncrypted(false);
+            } finally {
+                setChecking(false);
+            }
+        };
+        if (hasValue) checkStatus();
+        else setChecking(false);
+    }, [fieldKey, hasValue, adminToken]);
+
+    const handleEncrypt = async () => {
+        if (!hasValue || encrypted) return;
+
+        if (!confirm(`Are you sure you want to encrypt the field "${fieldKey}"? The value will be encrypted in the database.`)) {
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/app-settings/${fieldKey}/encrypt`, {
+                method: 'POST',
+                headers: { 'X-Admin-Token': adminToken || '' }
+            });
+            const data = await response.json();
+            if (data.success) {
+                setEncrypted(true);
+                onEncrypted?.();
+            } else {
+                alert(data.error || 'Failed to encrypt');
+            }
+        } catch (err) {
+            alert('Error: failed to encrypt field');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (checking) {
+        return (
+            <div className="p-2 bg-gray-500/20 rounded-lg">
+                <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+            </div>
+        );
+    }
+
+    if (!hasValue) {
+        return (
+            <div className="p-2 bg-gray-500/10 rounded-lg cursor-not-allowed" title="Enter a value first">
+                <LockOpen className="w-4 h-4 text-gray-500" />
+            </div>
+        );
+    }
+
+    if (encrypted) {
+        return (
+            <div className="flex items-center gap-1 px-2 py-1 bg-green-500/20 rounded-lg" title="Encrypted">
+                <Lock className="w-4 h-4 text-green-400" />
+                <span className="text-xs text-green-400">Encrypted</span>
+            </div>
+        );
+    }
+
+    return (
+        <button
+            onClick={handleEncrypt}
+            disabled={loading}
+            className="flex items-center gap-1 px-2 py-1 bg-yellow-500/20 hover:bg-yellow-500/30 rounded-lg transition-colors"
+            title="Click to encrypt this field"
+        >
+            {loading ? (
+                <Loader2 className="w-4 h-4 text-yellow-400 animate-spin" />
+            ) : (
+                <LockOpen className="w-4 h-4 text-yellow-400" />
+            )}
+            <span className="text-xs text-yellow-400">Encrypt</span>
         </button>
     );
 }
@@ -282,13 +387,16 @@ export default function AdminBlockchainConfig() {
                                     <span />
                                 </Tooltip>
                             </label>
-                            <input
-                                type="text"
-                                value={config.rpc_url}
-                                onChange={(e) => handleChange('rpc_url', e.target.value)}
-                                placeholder="https://api.mainnet-beta.solana.com"
-                                className="w-full px-3 py-2 bg-black/40 border border-[#00ff41]/20 rounded-lg text-white text-sm font-mono focus:outline-none focus:border-[#00ff41]/50"
-                            />
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={config.rpc_url}
+                                    onChange={(e) => handleChange('rpc_url', e.target.value)}
+                                    placeholder="https://api.mainnet-beta.solana.com"
+                                    className="flex-1 px-3 py-2 bg-black/40 border border-[#00ff41]/20 rounded-lg text-white text-sm font-mono focus:outline-none focus:border-[#00ff41]/50"
+                                />
+                                <EncryptButton fieldKey="rpc_url" hasValue={!!config.rpc_url} />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -318,6 +426,7 @@ export default function AdminBlockchainConfig() {
                                     placeholder="TokenMintAddress123..."
                                     className="flex-1 px-3 py-2 bg-black/40 border border-[#00ff41]/20 rounded-lg text-white text-sm font-mono focus:outline-none focus:border-[#00ff41]/50"
                                 />
+                                <EncryptButton fieldKey="token_mint" hasValue={!!config.token_mint} />
                                 {config.token_mint && (
                                     <a
                                         href={`https://solscan.io/token/${config.token_mint}${config.network === 'devnet' ? '?cluster=devnet' : ''}`}
@@ -393,6 +502,7 @@ export default function AdminBlockchainConfig() {
                                     placeholder="Enter Program ID from deployed contract..."
                                     className="flex-1 px-3 py-2 bg-black/40 border border-purple-500/30 rounded-lg text-white text-sm font-mono focus:outline-none focus:border-purple-500/50"
                                 />
+                                <EncryptButton fieldKey="program_id" hasValue={!!config.program_id} />
                                 {config.program_id && <CopyButton text={config.program_id} />}
                             </div>
                             {!hasProgramId && (

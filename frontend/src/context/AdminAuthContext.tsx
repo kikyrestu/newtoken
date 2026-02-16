@@ -1,90 +1,180 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode, useCallback } from 'react';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 // Admin Auth Context Types
+interface AdminInfo {
+    id: number;
+    username: string;
+    role: string;
+}
+
 interface AdminAuthContextType {
     isAdminAuthenticated: boolean;
     adminToken: string | null;
-    adminLogin: (username: string, password: string) => boolean;
-    adminLogout: () => void;
+    adminInfo: AdminInfo | null;
+    adminLogin: (username: string, password: string) => Promise<boolean>;
+    adminLogout: () => Promise<void>;
+    isLoading: boolean;
+    error: string | null;
 }
 
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
 
 // Storage keys with obscure prefix
-const AUTH_TOKEN_KEY = '_nexus_admin_auth_token_v1';
-const AUTH_TIMESTAMP_KEY = '_nexus_admin_auth_ts';
-const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
-
-// Admin credentials - requested by user
-const ADMIN_USERNAME = 'adminDev';
-const ADMIN_PASSWORD = 'V4n7An3w70|<3n';
-
-// Generate a simple auth token
-const generateToken = () => {
-    return `nexus_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-};
+const AUTH_TOKEN_KEY = '_nexus_admin_auth_token_v2';
+const AUTH_INFO_KEY = '_nexus_admin_info_v2';
 
 // Provider Component
 export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
-    const [adminToken, setAdminToken] = useState<string | null>(() => {
-        // Check if valid token exists on mount
-        const token = localStorage.getItem(AUTH_TOKEN_KEY);
-        const timestamp = localStorage.getItem(AUTH_TIMESTAMP_KEY);
-
-        if (token && timestamp) {
-            const tokenAge = Date.now() - parseInt(timestamp, 10);
-            if (tokenAge < TOKEN_EXPIRY_MS) {
-                return token;
-            } else {
-                // Token expired, clean up
-                localStorage.removeItem(AUTH_TOKEN_KEY);
-                localStorage.removeItem(AUTH_TIMESTAMP_KEY);
-            }
-        }
-        return null;
-    });
+    const [adminToken, setAdminToken] = useState<string | null>(null);
+    const [adminInfo, setAdminInfo] = useState<AdminInfo | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     const isAdminAuthenticated = !!adminToken;
 
-    // Check token expiry periodically
+    // Verify token with backend on mount
     useEffect(() => {
-        const checkExpiry = () => {
-            const timestamp = localStorage.getItem(AUTH_TIMESTAMP_KEY);
-            if (timestamp) {
-                const tokenAge = Date.now() - parseInt(timestamp, 10);
-                if (tokenAge >= TOKEN_EXPIRY_MS) {
-                    adminLogout();
+        const verifyToken = async () => {
+            const storedToken = localStorage.getItem(AUTH_TOKEN_KEY);
+
+            if (!storedToken) {
+                setIsLoading(false);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/auth/verify`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Admin-Token': storedToken,
+                    },
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setAdminToken(storedToken);
+                    setAdminInfo(data.admin);
+                } else {
+                    // Token invalid or expired, clean up
+                    localStorage.removeItem(AUTH_TOKEN_KEY);
+                    localStorage.removeItem(AUTH_INFO_KEY);
                 }
+            } catch (err) {
+                console.error('Token verification failed:', err);
+                localStorage.removeItem(AUTH_TOKEN_KEY);
+                localStorage.removeItem(AUTH_INFO_KEY);
+            } finally {
+                setIsLoading(false);
             }
         };
 
-        const interval = setInterval(checkExpiry, 60000); // Check every minute
-        return () => clearInterval(interval);
+        verifyToken();
     }, []);
 
-    const adminLogin = (username: string, password: string): boolean => {
-        if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-            const token = generateToken();
-            localStorage.setItem(AUTH_TOKEN_KEY, token);
-            localStorage.setItem(AUTH_TIMESTAMP_KEY, Date.now().toString());
-            setAdminToken(token);
-            return true;
-        }
-        return false;
-    };
+    // Periodic token verification (every 5 minutes)
+    useEffect(() => {
+        if (!adminToken) return;
 
-    const adminLogout = () => {
+        const interval = setInterval(async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/auth/verify`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Admin-Token': adminToken,
+                    },
+                });
+
+                if (!response.ok) {
+                    // Token expired, logout
+                    setAdminToken(null);
+                    setAdminInfo(null);
+                    localStorage.removeItem(AUTH_TOKEN_KEY);
+                    localStorage.removeItem(AUTH_INFO_KEY);
+                }
+            } catch (err) {
+                console.error('Token check failed:', err);
+            }
+        }, 5 * 60 * 1000);
+
+        return () => clearInterval(interval);
+    }, [adminToken]);
+
+    /**
+     * Login via backend API
+     */
+    const adminLogin = useCallback(async (username: string, password: string): Promise<boolean> => {
+        setError(null);
+        setIsLoading(true);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                // Store token securely
+                localStorage.setItem(AUTH_TOKEN_KEY, data.token);
+                localStorage.setItem(AUTH_INFO_KEY, JSON.stringify(data.admin));
+
+                setAdminToken(data.token);
+                setAdminInfo(data.admin);
+                return true;
+            } else {
+                setError(data.error || 'Login failed');
+                return false;
+            }
+        } catch (err) {
+            console.error('Login error:', err);
+            setError('Network error. Please try again.');
+            return false;
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    /**
+     * Logout via backend API
+     */
+    const adminLogout = useCallback(async (): Promise<void> => {
+        if (adminToken) {
+            try {
+                await fetch(`${API_BASE_URL}/admin/auth/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Admin-Token': adminToken,
+                    },
+                });
+            } catch (err) {
+                console.error('Logout error:', err);
+            }
+        }
+
+        // Clear local state regardless of API response
         localStorage.removeItem(AUTH_TOKEN_KEY);
-        localStorage.removeItem(AUTH_TIMESTAMP_KEY);
+        localStorage.removeItem(AUTH_INFO_KEY);
         setAdminToken(null);
-    };
+        setAdminInfo(null);
+    }, [adminToken]);
 
     return (
         <AdminAuthContext.Provider value={{
             isAdminAuthenticated,
             adminToken,
+            adminInfo,
             adminLogin,
-            adminLogout
+            adminLogout,
+            isLoading,
+            error,
         }}>
             {children}
         </AdminAuthContext.Provider>
@@ -99,8 +189,11 @@ export const useAdminAuth = () => {
         return {
             isAdminAuthenticated: false,
             adminToken: null,
-            adminLogin: () => false,
-            adminLogout: () => { }
+            adminInfo: null,
+            adminLogin: async () => false,
+            adminLogout: async () => { },
+            isLoading: false,
+            error: null,
         };
     }
     return context;

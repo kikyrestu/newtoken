@@ -14,6 +14,7 @@ import {
     TOKEN_PROGRAM_ID
 } from '@solana/spl-token';
 import { useCallback, useState } from 'react';
+import { sha256 } from '@noble/hashes/sha256';
 
 // ============================================================================
 // CONFIGURATION - Dynamic from Admin Dashboard
@@ -26,10 +27,31 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 const DEFAULT_PROGRAM_ID = import.meta.env.VITE_PROGRAM_ID || '';
 const DEFAULT_TOKEN_MINT = import.meta.env.VITE_TOKEN_MINT || '';
 
-// Cache for dynamic config
-let cachedConfig: { programId: string; tokenMint: string; decimals: number } | null = null;
-let configLastFetched = 0;
+// Config cache using sessionStorage to prevent staleness across page loads
+const CONFIG_CACHE_KEY = 'blockchain_config_cache';
 const CONFIG_CACHE_TTL = 60000; // 1 minute
+
+function getCachedConfig(): { programId: string; tokenMint: string; decimals: number } | null {
+    try {
+        const cached = sessionStorage.getItem(CONFIG_CACHE_KEY);
+        if (cached) {
+            const { config, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp < CONFIG_CACHE_TTL) {
+                return config;
+            }
+        }
+    } catch { /* ignore storage errors */ }
+    return null;
+}
+
+function setCachedConfig(config: { programId: string; tokenMint: string; decimals: number }) {
+    try {
+        sessionStorage.setItem(CONFIG_CACHE_KEY, JSON.stringify({
+            config,
+            timestamp: Date.now()
+        }));
+    } catch { /* ignore storage errors */ }
+}
 
 // Unlock availability - Enabled for Production/Testing
 export const UNLOCK_ENABLED = true;
@@ -38,11 +60,10 @@ export const UNLOCK_ENABLED = true;
  * Fetch blockchain config from backend
  */
 async function fetchBlockchainConfig(): Promise<{ programId: string; tokenMint: string; decimals: number }> {
-    const now = Date.now();
-
-    // Return cached if still valid
-    if (cachedConfig && (now - configLastFetched) < CONFIG_CACHE_TTL) {
-        return cachedConfig;
+    // Return cached if still valid (using sessionStorage now)
+    const cached = getCachedConfig();
+    if (cached) {
+        return cached;
     }
 
     try {
@@ -53,13 +74,13 @@ async function fetchBlockchainConfig(): Promise<{ programId: string; tokenMint: 
         if (response.ok) {
             const data = await response.json();
             if (data.success && data.value) {
-                cachedConfig = {
+                const config = {
                     programId: data.value.program_id || DEFAULT_PROGRAM_ID,
                     tokenMint: data.value.token_mint || DEFAULT_TOKEN_MINT,
                     decimals: data.value.token_decimals || 9
                 };
-                configLastFetched = now;
-                return cachedConfig;
+                setCachedConfig(config);
+                return config;
             }
         }
     } catch (err) {
@@ -426,11 +447,15 @@ export function useLockProgram() {
      * Format token amount for display (9 decimals)
      */
     const formatTokenAmount = useCallback((amount: bigint | number): string => {
-        const num = typeof amount === 'bigint' ? Number(amount) : amount;
-        return (num / 1_000_000_000).toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 4
-        });
+        // FIX [MINOR-6]: Use BigInt arithmetic to avoid precision loss for large amounts
+        const bigAmount = typeof amount === 'bigint' ? amount : BigInt(Math.round(amount));
+        const DECIMALS = BigInt(1_000_000_000);
+        const wholePart = bigAmount / DECIMALS;
+        const fractionalPart = bigAmount % DECIMALS;
+        // Take first 4 decimal places
+        const fractionalStr = fractionalPart.toString().padStart(9, '0').slice(0, 4);
+        const wholeStr = wholePart.toLocaleString();
+        return `${wholeStr}.${fractionalStr}`;
     }, []);
 
     /**
@@ -477,9 +502,17 @@ export function useLockProgram() {
 // ============================================================================
 
 /**
+ * Generate proper Anchor instruction discriminator
+ * Anchor uses SHA256 of "global:<instruction_name>" and takes first 8 bytes
+ */
+function getAnchorDiscriminator(instructionName: string): Buffer {
+    const hash = sha256(`global:${instructionName}`);
+    return Buffer.from(hash.slice(0, 8));
+}
+
+/**
  * Create the lock instruction
- * NOTE: This is a simplified version. In production, use @coral-xyz/anchor
- * to properly serialize instruction data according to your IDL.
+ * Uses proper Anchor discriminator for "lock_tokens" instruction
  */
 function createLockInstruction(
     user: PublicKey,
@@ -491,9 +524,8 @@ function createLockInstruction(
     lockDuration: number,
     tier: string
 ): TransactionInstruction {
-    // Instruction discriminator for "lock_tokens" 
-    // This should match your Anchor program's instruction discriminator
-    const discriminator = Buffer.from([0x01]); // Placeholder - update with actual
+    // SECURITY FIX (L2): Use proper Anchor discriminator
+    const discriminator = getAnchorDiscriminator('lock_tokens');
 
     // Encode instruction data
     // Format: discriminator + amount (u64) + lock_duration (i64) + tier (string)
@@ -536,6 +568,7 @@ function createLockInstruction(
 
 /**
  * Create the unlock instruction
+ * Uses proper Anchor discriminator for "unlock_tokens" instruction
  */
 function createUnlockInstruction(
     user: PublicKey,
@@ -544,8 +577,8 @@ function createUnlockInstruction(
     userTokenAccount: PublicKey,
     escrowTokenAccount: PublicKey
 ): TransactionInstruction {
-    // Instruction discriminator for "unlock_tokens"
-    const discriminator = Buffer.from([0x02]); // Placeholder - update with actual
+    // SECURITY FIX (L2): Use proper Anchor discriminator
+    const discriminator = getAnchorDiscriminator('unlock_tokens');
 
     return new TransactionInstruction({
         keys: [

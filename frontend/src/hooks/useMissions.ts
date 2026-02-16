@@ -87,7 +87,7 @@ export function useAdminMissions(): UseAdminMissionsReturn {
 
     const getHeaders = () => ({
         'Content-Type': 'application/json',
-        'X-Admin-Token': localStorage.getItem('adminToken') || '',
+        'X-Admin-Token': localStorage.getItem('_nexus_admin_auth_token_v2') || '',
     });
 
     const fetchMissions = useCallback(async () => {

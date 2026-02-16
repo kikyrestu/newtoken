@@ -12,7 +12,7 @@ import {
     X,
     Home,
     Link2,
-    Server
+    Loader2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AdminOverview from '../components/admin/AdminOverview';
@@ -21,10 +21,9 @@ import AdminTransactions from '../components/admin/AdminTransactions';
 import AdminSettings from '../components/admin/AdminSettings';
 import AdminTierConfig from '../components/admin/AdminTierConfig';
 import AdminBlockchainConfig from '../components/admin/AdminBlockchainConfig';
-import AppSettingsPanel from '../components/admin/AppSettingsPanel';
 import AdminMissions from '../components/admin/AdminMissions';
 
-type TabType = 'overview' | 'users' | 'transactions' | 'missions' | 'settings' | 'tiers' | 'blockchain' | 'app-config';
+type TabType = 'overview' | 'users' | 'transactions' | 'missions' | 'settings' | 'tiers' | 'blockchain';
 
 const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={18} /> },
@@ -33,14 +32,25 @@ const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
     { id: 'missions', label: 'Missions', icon: <Layers size={18} /> },
     { id: 'tiers', label: 'Tier Config', icon: <Layers size={18} /> },
     { id: 'blockchain', label: 'Blockchain', icon: <Link2 size={18} /> },
-    { id: 'app-config', label: 'App Config', icon: <Server size={18} /> },
     { id: 'settings', label: 'Visual Editor', icon: <Settings size={18} /> },
 ];
 
 export default function AdminDashboard() {
-    const { isAdminAuthenticated, adminLogout } = useAdminAuth();
+    const { isAdminAuthenticated, adminLogout, isLoading } = useAdminAuth();
     const [activeTab, setActiveTab] = useState<TabType>('overview');
     const [sidebarOpen, setSidebarOpen] = useState(true);
+
+    // Show loading state while verifying token
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-[#0a0c10] flex items-center justify-center">
+                <div className="text-center">
+                    <Loader2 className="w-12 h-12 text-[#00ff41] mx-auto mb-4 animate-spin" />
+                    <p className="text-gray-400">Verifying authentication...</p>
+                </div>
+            </div>
+        );
+    }
 
     // Redirect if not authenticated
     if (!isAdminAuthenticated) {
@@ -51,10 +61,10 @@ export default function AdminDashboard() {
                     <h1 className="text-2xl font-bold text-white mb-2">Access Denied</h1>
                     <p className="text-gray-400 mb-4">Admin authentication required</p>
                     <Link
-                        to="/"
+                        to="/admin-login?formLoginOpen"
                         className="inline-block px-6 py-2 bg-[#00ff41] text-black font-bold rounded hover:bg-[#00cc33] transition-colors"
                     >
-                        Go Home
+                        Login
                     </Link>
                 </div>
             </div>
@@ -77,8 +87,6 @@ export default function AdminDashboard() {
                 return <AdminTierConfig />;
             case 'blockchain':
                 return <AdminBlockchainConfig />;
-            case 'app-config':
-                return <AppSettingsPanel />;
             default:
                 return <AdminOverview />;
         }

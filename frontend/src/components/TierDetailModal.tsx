@@ -86,7 +86,7 @@ export const TierDetailModal: React.FC<TierDetailModalProps> = ({
 
     const handleBuyClick = useCallback(() => {
         if (!connected) {
-            setErrorMessage('Please connect your Wallet to proceed');
+            setErrorMessage('Please connect your wallet to continue');
             return;
         }
         // Move to confirmation step
@@ -96,7 +96,7 @@ export const TierDetailModal: React.FC<TierDetailModalProps> = ({
 
     const handleConfirmPurchase = useCallback(async () => {
         if (!tierPricing || tierPricing.tokens <= 0) {
-            setErrorMessage('Price feed unavailable. Please try again later.');
+            setErrorMessage('Price not available. Please try again later.');
             return;
         }
 
@@ -146,7 +146,7 @@ export const TierDetailModal: React.FC<TierDetailModalProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm pointer-events-auto">
             <div className="relative w-full max-w-md bg-[#0a0c10] border border-[#00ff41]/30 rounded-xl overflow-hidden shadow-[0_0_50px_rgba(0,255,65,0.1)]">
 
                 {/* Close Button */}
@@ -202,8 +202,18 @@ export const TierDetailModal: React.FC<TierDetailModalProps> = ({
 
                         {/* Price Display */}
                         {tierPricing && (
-                            <div className="text-center mb-4 text-sm text-gray-400">
-                                ({tierPricing.tokens_formatted} Token ~ ${tierPricing.current_price})
+                            <div className="text-center mb-4">
+                                <div className="flex items-center justify-center gap-2 text-sm">
+                                    <span className="text-gray-500 line-through">
+                                        ${tier === 'spectator' ? 25 : tier === 'operator' ? 175 : 275}
+                                    </span>
+                                    <span className="text-[#00ff41] font-bold text-lg">
+                                        ${tierPricing.current_price}
+                                    </span>
+                                </div>
+                                <div className="text-gray-400 text-xs mt-1">
+                                    ({tierPricing.tokens_formatted} Token)
+                                </div>
                             </div>
                         )}
 

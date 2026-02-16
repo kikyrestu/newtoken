@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Models\LockTransaction;
+use App\Models\UserWallet;
+use App\Models\GlobalStats;
 use App\Models\AppSetting;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 /**
@@ -13,9 +15,11 @@ use Carbon\Carbon;
  * 
  * Handles automatic unlocking of tokens when lock period expires.
  * This service will:
- * 1. Find all matured locks (unlock_at <= now)
- * 2. Trigger transfer of tokens from escrow to user wallet
- * 3. Update lock status to 'completed'
+ * 1. Find all matured locks (unlock_timestamp <= now)
+ * 2. Mark them as "pending_unlock" for user to claim
+ * 3. Update global stats
+ * 
+ * FIX [API-4]: Fixed wrong column names, status values, and relation usage.
  */
 class AutoUnlockService
 {
@@ -33,9 +37,9 @@ class AutoUnlockService
             'errors' => [],
         ];
 
-        // Get all active locks that are ready to unlock
-        $maturedLocks = LockTransaction::where('status', 'active')
-            ->where('unlock_at', '<=', Carbon::now())
+        // FIX [API-4]: Use correct status 'locked' and column 'unlock_timestamp'
+        $maturedLocks = LockTransaction::where('status', LockTransaction::STATUS_LOCKED)
+            ->where('unlock_timestamp', '<=', Carbon::now())
             ->get();
 
         if ($maturedLocks->isEmpty()) {
@@ -53,7 +57,9 @@ class AutoUnlockService
                 
                 if ($result['success']) {
                     $summary['success']++;
-                    Log::info("[AutoUnlock] Successfully unlocked ID:{$lock->id} for wallet {$lock->wallet_address}");
+                    // FIX [API-4]: Access wallet via relation
+                    $walletAddress = $lock->userWallet->wallet_address ?? 'unknown';
+                    Log::info("[AutoUnlock] Successfully unlocked ID:{$lock->id} for wallet {$walletAddress}");
                 } else {
                     $summary['failed']++;
                     $summary['errors'][] = "Lock #{$lock->id}: {$result['error']}";
@@ -72,95 +78,61 @@ class AutoUnlockService
     /**
      * Process a single unlock
      * 
-     * For now, this marks the lock as "pending_unlock" for user to claim.
+     * Marks the lock as "pending_unlock" for user to claim.
      * Full auto-unlock requires server keypair which needs secure setup.
-     * 
-     * @param LockTransaction $lock
-     * @return array
      */
     protected function processUnlock(LockTransaction $lock): array
     {
-        // Option 1: Full Auto-Unlock (requires server keypair)
-        // This would send tokens back automatically
-        // $result = $this->executeOnChainUnlock($lock);
-        
-        // Option 2: Mark as "pending_unlock" for user notification
-        // User still needs to trigger unlock, but they're notified
-        $lock->status = 'pending_unlock';
+        // Mark as expired/unlockable — user still needs to trigger on-chain unlock
+        $lock->status = LockTransaction::STATUS_EXPIRED;
         $lock->save();
 
-        // Decrement global stats since lock is ending
+        // Decrement global stats since lock period has ended
         $this->decrementGlobalStats($lock);
 
         return [
             'success' => true,
-            'message' => 'Marked as pending_unlock',
-        ];
-
-        // If implementing full auto-unlock, uncomment below:
-        // return $this->executeOnChainUnlock($lock);
-    }
-
-    /**
-     * Execute on-chain unlock transaction
-     * 
-     * NOTE: This requires a server keypair stored securely.
-     * The keypair must have authority to release tokens from escrow.
-     * 
-     * @param LockTransaction $lock
-     * @return array
-     */
-    protected function executeOnChainUnlock(LockTransaction $lock): array
-    {
-        // Get config from app settings
-        $programId = AppSetting::get('program_id');
-        $rpcUrl = AppSetting::get('rpc_url', 'https://api.devnet.solana.com');
-        
-        // Server keypair for signing (must be set in env)
-        $serverKeypair = env('UNLOCK_SERVER_KEYPAIR');
-        
-        if (!$serverKeypair || !$programId) {
-            return [
-                'success' => false,
-                'error' => 'Server keypair or program ID not configured',
-            ];
-        }
-
-        // TODO: Implement actual Solana transaction
-        // This would need a PHP Solana SDK or call to a separate service
-        // 
-        // Steps:
-        // 1. Create unlock instruction
-        // 2. Sign with server keypair
-        // 3. Send transaction
-        // 4. Wait for confirmation
-        // 5. Update lock status to 'completed'
-        
-        // For now, return error indicating not yet implemented
-        return [
-            'success' => false,
-            'error' => 'On-chain auto-unlock not yet implemented - requires server keypair setup',
+            'message' => 'Marked as expired (ready for unlock)',
         ];
     }
 
     /**
      * Decrement global stats when lock ends
+     * 
+     * FIX [API-4]: Use GlobalStats model if available, otherwise use direct DB
+     * with correct column names.
      */
     protected function decrementGlobalStats(LockTransaction $lock): void
     {
-        // Update global stats to reflect unlocked tokens
-        \DB::table('global_stats')
-            ->where('id', 1)
-            ->decrementEach([
-                'total_locked_tokens' => $lock->amount,
-                'total_locked_usd' => $lock->usd_value ?? 0,
+        try {
+            // Try using GlobalStats model first
+            if (class_exists(\App\Models\GlobalStats::class)) {
+                $stats = GlobalStats::first();
+                if ($stats) {
+                    $stats->decrement('total_locked_tokens', $lock->amount);
+                    $stats->decrement('total_locked_usd', $lock->usd_value_at_lock ?? 0);
+                    
+                    // Decrement tier counter
+                    $tierField = 'tier_' . strtolower($lock->tier) . '_count';
+                    if (\Schema::hasColumn($stats->getTable(), $tierField)) {
+                        $stats->decrement($tierField);
+                    }
+                }
+            } else {
+                // Fallback: Direct DB update
+                DB::table('global_stats')
+                    ->where('id', 1)
+                    ->update([
+                        'total_locked_tokens' => DB::raw("GREATEST(0, total_locked_tokens - {$lock->amount})"),
+                        'total_locked_usd' => DB::raw("GREATEST(0, total_locked_usd - " . ($lock->usd_value_at_lock ?? 0) . ")"),
+                    ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('[AutoUnlock] Failed to decrement global stats', [
+                'lock_id' => $lock->id,
+                'error' => $e->getMessage(),
             ]);
-
-        // Decrement tier counter
-        $tierField = 'tier_' . strtolower($lock->tier) . '_count';
-        \DB::table('global_stats')
-            ->where('id', 1)
-            ->decrement($tierField);
+        }
     }
 
     /**
@@ -168,17 +140,24 @@ class AutoUnlockService
      */
     public static function getPendingUnlocksCount(): int
     {
-        return LockTransaction::where('status', 'pending_unlock')->count();
+        return LockTransaction::where('status', LockTransaction::STATUS_EXPIRED)->count();
     }
 
     /**
      * Get user's pending unlocks
+     * FIX [API-4]: Use relation through UserWallet instead of direct wallet_address column
      */
     public static function getUserPendingUnlocks(string $wallet): \Illuminate\Database\Eloquent\Collection
     {
-        return LockTransaction::where('wallet_address', $wallet)
-            ->where('status', 'pending_unlock')
-            ->orderBy('unlock_at', 'desc')
+        $userWallet = UserWallet::where('wallet_address', $wallet)->first();
+        
+        if (!$userWallet) {
+            return new \Illuminate\Database\Eloquent\Collection();
+        }
+
+        return $userWallet->lockTransactions()
+            ->where('status', LockTransaction::STATUS_EXPIRED)
+            ->orderBy('unlock_timestamp', 'desc')
             ->get();
     }
 }

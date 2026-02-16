@@ -193,13 +193,13 @@ export function useUserDashboard() {
 
                 // If version changed, refetch dashboard data
                 if (lastVersion !== null && lastVersion !== newVersion) {
-                    console.debug('[Sync] Version changed, refetching data...');
+                    if (import.meta.env.DEV) console.debug('[Sync] Version changed, refetching data...');
                     refetch();
                 }
 
                 lastVersion = newVersion;
             } catch (err) {
-                console.debug('[Sync] Version check failed:', err);
+                if (import.meta.env.DEV) console.debug('[Sync] Version check failed:', err);
             }
         };
 

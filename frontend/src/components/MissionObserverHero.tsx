@@ -180,7 +180,7 @@ const MissionObserverHeroInner = () => {
             <div className="absolute inset-0 z-10 p-2 md:p-4 flex flex-col h-full pointer-events-none">
 
                 {/* --- MOBILE HEADER (Split 2-row design) --- */}
-                <div className="md:hidden relative z-[400]">
+                <div className="md:hidden relative z-[500]">
                     <MobileHeader
                         onSafetyClick={() => setShowSafetyModal(true)}
                         onInstructionsClick={() => setShowInstructionsModal(true)}
@@ -191,7 +191,7 @@ const MissionObserverHeroInner = () => {
                 </div>
 
                 {/* --- DESKTOP HEADER --- */}
-                <header className="hidden md:flex flex-shrink-0 justify-between items-start pointer-events-auto min-h-[80px] relative z-[400]">
+                <header className="hidden md:flex flex-shrink-0 justify-between items-start pointer-events-auto min-h-[80px] relative z-[500]">
                     {/* Top Left Stats - Telemetry Widget */}
                     <div className="scale-90 origin-top-left lg:scale-100">
                         <TelemetryWidget
@@ -215,7 +215,7 @@ const MissionObserverHeroInner = () => {
                         <img
                             src="/logo.png"
                             alt="Drone"
-                            className="w-16 h-16 lg:w-20 lg:h-20 object-contain drop-shadow-[0_0_15px_rgba(0,255,65,0.6)]"
+                            className="w-20 h-20 lg:w-28 lg:h-28 object-contain drop-shadow-[0_0_15px_rgba(0,255,65,0.6)]"
                         />
                         {/* UA text with green glow */}
                         <img
@@ -245,29 +245,18 @@ const MissionObserverHeroInner = () => {
                         >
                             Swap
                         </button>
-                        <button className="text-white font-bold text-base hover:text-[#00ff41] transition-colors px-2 py-1">
-                            About
-                        </button>
-
                         {/* Wallet Button - Tactical Theme */}
                         <TacticalWalletButton />
                     </div>
                 </header>
 
-                {/* --- CENTER CONTENT --- */}
-                {showDashboard ? (
-                    /* User Dashboard View - ABSOLUTE CENTERED on full viewport */
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-auto z-[50]">
-                        <div className="w-full max-w-4xl mx-auto px-4">
-                            <UserDashboard />
-                        </div>
-                    </div>
-                ) : (
+                {/* --- CENTER CONTENT (Timer & Cards - always render when not in dashboard) --- */}
+                {!showDashboard && (
                     /* Timer & Mission Cards View */
                     <main className="flex-1 flex flex-col justify-start min-h-0 pointer-events-auto">
 
                         {/* CENTER DISPLAY AREA - Timer with Visual Editor */}
-                        <div className="absolute inset-0 flex items-center justify-center px-4 pointer-events-none z-[300]">
+                        <div className={`absolute inset-0 flex items-center justify-center px-4 z-[600] ${showSafetyModal || showInstructionsModal ? 'pointer-events-auto' : 'pointer-events-none'}`}>
                             {!showSafetyModal && !showInstructionsModal ? (
                                 <TimerDevice
                                     unlockTimestamp={unlockTimestamp}
@@ -328,7 +317,7 @@ const MissionObserverHeroInner = () => {
                         </div>
 
                         {/* --- BOTTOM: MISSION CARDS --- */}
-                        <div className="hidden md:block flex-shrink-0 w-full px-2 md:px-6 pb-2 pt-2 mt-auto z-[20]">
+                        <div className="hidden md:block flex-shrink-0 w-full px-2 md:px-6 pb-8 pt-2 mt-auto z-[20]">
                             <div className="max-w-6xl mx-auto">
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 items-start">
                                     {(() => {
@@ -381,6 +370,15 @@ const MissionObserverHeroInner = () => {
 
             </div>
 
+            {/* USER DASHBOARD - Rendered at root level, positioned BELOW header */}
+            {showDashboard && (
+                <div className="fixed top-20 md:top-24 left-0 right-0 bottom-0 flex items-stretch z-[450] p-4 pointer-events-auto">
+                    <div className="w-full max-w-4xl mx-auto h-full">
+                        <UserDashboard />
+                    </div>
+                </div>
+            )}
+
             {/* MODALS */}
 
             {/* Tier Detail Modal */}
@@ -412,7 +410,7 @@ const MissionObserverHeroInner = () => {
             <MobileCardCarousel
                 onSuccess={handleLockSuccess}
                 onCardClick={(tier) => setActiveTierModal(tier)}
-                hidden={showSafetyModal || showInstructionsModal || showSwapModal}
+                hideCarousel={showSafetyModal || showInstructionsModal || showSwapModal || !!activeTierModal}
             />
         </div >
     );

@@ -14,10 +14,12 @@ class PriceOracleService
     private int $tokenDecimals;
     
     /**
-     * Tier USD prices
+     * Tier USD base prices (fallback values)
+     * FIX [L-4]: Synced with EarlyBirdPricingService::DEFAULT_TIERS
+     * Primary source of pricing is EarlyBirdPricingService
      */
     public const TIER_PRICES = [
-        'spectator' => 20.00,
+        'spectator' => 25.00,
         'operator' => 150.00,
         'elite' => 250.00,
     ];

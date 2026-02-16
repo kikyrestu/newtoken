@@ -918,9 +918,23 @@ canvas {
 }
 
 /* Wallet Adapter Override for Cyberpunk Style */
+/* CRITICAL: Override z-index to appear above timer (z-400) */
 .wallet-adapter-modal-wrapper {
   background: rgba(0, 10, 5, 0.95) !important;
-  z-index: 9999 !important;
+  z-index: 99999 !important;
+  position: fixed !important;
+}
+
+.wallet-adapter-modal-overlay {
+  z-index: 99998 !important;
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0, 0, 0, 0.9) !important;
+}
+
+.wallet-adapter-modal-container {
+  z-index: 99999 !important;
+  position: relative !important;
 }
 
 .wallet-adapter-modal {
