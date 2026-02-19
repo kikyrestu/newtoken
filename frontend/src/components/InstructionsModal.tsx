@@ -47,7 +47,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
         {
             icon: Zap,
             title: "Join the Mission",
-            desc: "Participate in the exclusive drone mission. Upon mission completion: Tokens of confirmed participants are permanently burned. Participants receive rewards equivalent to 3% of the burned token amount."
+            desc: "Participate in the exclusive drone mission. Upon mission completion: Tokens of confirmed participants are permanently burned. Participants receive rewards equivalent to 3% of the burned Token amount."
         }
     ];
 
@@ -73,7 +73,8 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
 
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-6">
-                    {/* NO ROCKET SYMBOL as requested */}
+                    {/* Icon matching Safety modal style */}
+                    <Target className="w-6 h-6 text-[#00ff41]" />
                     <div className="w-2 h-8 bg-[#00ff41]" />
                     <h2 className="text-lg font-bold text-white uppercase tracking-wider">
                         Mission <span className="text-[#00ff41]">Participation</span>

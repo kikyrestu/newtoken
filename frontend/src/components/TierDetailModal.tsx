@@ -245,7 +245,7 @@ export const TierDetailModal: React.FC<TierDetailModalProps> = ({
                         </div>
 
                         <p className="text-gray-400 text-center mb-6">
-                            Use tokens to purchase your slot—they'll be locked securely upon buy.
+                            Use Tokens to purchase your slot—they'll be locked securely upon buy.
                         </p>
 
                         {/* Token Amount Display */}
@@ -307,7 +307,7 @@ export const TierDetailModal: React.FC<TierDetailModalProps> = ({
                                 The mission starts in <span className="text-[#00ff41]">[25]</span> days
                             </p>
                             <p className="text-gray-400 text-sm mt-2">
-                                You locked {tierPricing?.tokens_formatted} tokens until unlock date
+                                You locked {tierPricing?.tokens_formatted} Tokens until unlock date
                             </p>
                         </div>
 
