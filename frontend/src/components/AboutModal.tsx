@@ -54,6 +54,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                             <Globe className="w-5 h-5 text-[#00ff41] opacity-70 group-hover:opacity-100 transition-opacity" />
                         </div>
                         <div>
+                            <h4 className="text-sm font-bold text-white mb-1 uppercase tracking-wide">Platform Overview</h4>
                             <p className="text-xs text-gray-400 leading-relaxed text-justify">
                                 This platform addresses operator shortages and centralized control bottlenecks by enabling ordinary individuals to contribute to drone missions under strict automated safety controls and certified pilot supervision—while assuming zero liability—and bridges fully automated systems with human situational intelligence.
                             </p>
@@ -145,7 +146,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
 
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 
