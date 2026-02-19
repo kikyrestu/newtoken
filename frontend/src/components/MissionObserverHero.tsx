@@ -278,7 +278,7 @@ const MissionObserverHeroInner = () => {
                             {!showSafetyModal && !showInstructionsModal && !showAboutModal ? (
                                 <div className="flex flex-col items-center gap-2 pointer-events-auto">
                                     {/* Hero Text */}
-                                    <h1 className="text-white text-2xl md:text-4xl font-bold tracking-wider uppercase text-center"
+                                    <h1 className="text-white text-3xl md:text-5xl font-bold tracking-wider uppercase text-center"
                                         style={{ textShadow: '0 0 20px rgba(0,255,65,0.3)' }}>
                                         Fly Unmanned Aircraft
                                     </h1>
@@ -375,7 +375,7 @@ const MissionObserverHeroInner = () => {
                                                 <div className="flex flex-col gap-2">
                                                     <MissionTierCard
                                                         tier="spectator"
-                                                        title={<EditableText storageKey="spectator_title">Observer $25</EditableText>}
+                                                        title={<EditableText storageKey="spectator_title">Observer</EditableText>}
                                                         isLocked={!!spectatorLock}
                                                         lockedSignature={spectatorLock?.signature}
                                                         onClick={() => setActiveTierModal('spectator')}
@@ -386,7 +386,7 @@ const MissionObserverHeroInner = () => {
                                                 <div className="flex flex-col gap-2">
                                                     <MissionTierCard
                                                         tier="operator"
-                                                        title={<EditableText storageKey="operator_title">Recon Drone Operator $150</EditableText>}
+                                                        title={<EditableText storageKey="operator_title">Recon Drone Operator</EditableText>}
                                                         isLocked={!!operatorLock}
                                                         lockedSignature={operatorLock?.signature}
                                                         onClick={() => setActiveTierModal('operator')}
@@ -397,7 +397,7 @@ const MissionObserverHeroInner = () => {
                                                 <div className="flex flex-col gap-2">
                                                     <MissionTierCard
                                                         tier="elite"
-                                                        title={<EditableText storageKey="elite_title">Advanced Drone Operator $250</EditableText>}
+                                                        title={<EditableText storageKey="elite_title">Advanced Drone Operator</EditableText>}
                                                         isLocked={!!eliteLock}
                                                         lockedSignature={eliteLock?.signature}
                                                         onClick={() => setActiveTierModal('elite')}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Shield, Cpu, Users, Scale, Lock, Rocket } from 'lucide-react';
+import { X, Shield, Cpu, Users, Scale, Lock, Globe } from 'lucide-react';
 
 interface AboutModalProps {
     isOpen: boolean;
@@ -51,7 +51,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                     {/* Intro */}
                     <div className="flex items-start gap-4 group">
                         <div className="flex-shrink-0 mt-1">
-                            <Rocket className="w-5 h-5 text-[#00ff41] opacity-70 group-hover:opacity-100 transition-opacity" />
+                            <Globe className="w-5 h-5 text-[#00ff41] opacity-70 group-hover:opacity-100 transition-opacity" />
                         </div>
                         <div>
                             <p className="text-xs text-gray-400 leading-relaxed text-justify">
