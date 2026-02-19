@@ -75,7 +75,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
                 <div className="flex items-center gap-3 mb-6">
                     {/* Icon matching Safety modal style */}
                     <Target className="w-6 h-6 text-[#00ff41]" />
-                    <div className="w-2 h-8 bg-[#00ff41]" />
+
                     <h2 className="text-lg font-bold text-white uppercase tracking-wider">
                         Mission <span className="text-[#00ff41]">Participation</span>
                     </h2>

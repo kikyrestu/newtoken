@@ -40,7 +40,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-6">
                     <Globe className="w-6 h-6 text-[#00ff41]" />
-                    <div className="w-2 h-8 bg-[#00ff41]" />
+
                     <h2 className="text-lg font-bold text-white uppercase tracking-wider">
                         About <span className="text-[#00ff41]">FLYUA</span>
                     </h2>
