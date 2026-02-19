@@ -1,10 +1,12 @@
 import React from 'react';
 import { X, Target, Wallet, CheckCircle, Lock, RefreshCw, Zap } from 'lucide-react';
+import { ModalNavTabs } from './ModalNavTabs';
 
 interface InstructionsModalProps {
     isOpen: boolean;
     onClose: () => void;
     isClosing?: boolean;
+    onNavigate?: (tab: 'safety' | 'participation' | 'about') => void;
 }
 
 /**
@@ -14,7 +16,8 @@ interface InstructionsModalProps {
 export const InstructionsModal: React.FC<InstructionsModalProps> = ({
     isOpen,
     onClose,
-    isClosing = false
+    isClosing = false,
+    onNavigate
 }) => {
     if (!isOpen) return null;
 
@@ -70,6 +73,9 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
                 >
                     <X size={20} />
                 </button>
+
+                {/* Nav Tabs */}
+                {onNavigate && <ModalNavTabs active="participation" onNavigate={onNavigate} />}
 
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-6">
