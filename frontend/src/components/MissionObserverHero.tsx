@@ -274,14 +274,14 @@ const MissionObserverHeroInner = () => {
                             {!showSafetyModal && !showInstructionsModal && !showAboutModal ? (
                                 <div className="flex flex-col items-center gap-2 pointer-events-auto">
                                     {/* Hero Text */}
-                                    <h1 className="text-white text-3xl md:text-5xl font-bold tracking-wider uppercase text-center"
+                                    <h1 className="text-white text-2xl md:text-4xl font-bold tracking-wider uppercase text-center"
                                         style={{ textShadow: '0 0 20px rgba(0,255,65,0.3)' }}>
                                         Fly Unmanned Aircraft
                                     </h1>
-                                    <p className="text-gray-400 text-sm md:text-base tracking-widest uppercase text-center">
+                                    <p className="text-gray-400 text-base md:text-lg font-bold tracking-widest uppercase text-center">
                                         Control Layer for Remote Drone Operations
                                     </p>
-                                    <p className="text-[#00ff41] text-xs md:text-sm font-bold tracking-[0.3em] uppercase mt-4">
+                                    <p className="text-[#00ff41] text-xs md:text-sm font-bold tracking-[0.3em] uppercase mt-8">
                                         Mission Launch In
                                     </p>
 
