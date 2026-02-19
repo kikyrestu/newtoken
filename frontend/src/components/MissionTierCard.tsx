@@ -106,6 +106,9 @@ export const MissionTierCard: React.FC<MissionTierCardProps> = ({
                         <Lock size={14} /> LOCKED
                     </div>
                 )}
+                <p className="text-red-500 text-[10px] font-bold uppercase tracking-wider text-center mt-2">
+                    Slot Reservation soon available
+                </p>
 
                 {/* Decorative Corner */}
                 <div className="absolute bottom-0 right-0 w-6 h-6 border-r-2 border-b-2 border-[#00ff41]/20 group-hover:border-[#00ff41]/60 transition-colors" />

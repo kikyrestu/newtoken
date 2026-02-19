@@ -129,8 +129,10 @@ const MissionObserverHeroInner = () => {
         console.log('⏰ Timer set to:', new Date(unlockTime * 1000).toISOString());
     };
 
-    // Use unlock timestamp: prefer backend data, fallback to demo mode local state
-    const unlockTimestamp = nextUnlock?.unix_timestamp || demoUnlockTimestamp || undefined;
+    // Use unlock timestamp: prefer backend data, fallback to demo mode, then fixed launch date
+    // Launch date: Feb 26, 2026 23:59:59 UTC (+7 days from Feb 19)
+    const LAUNCH_TIMESTAMP = Math.floor(new Date('2026-02-26T23:59:59Z').getTime() / 1000);
+    const unlockTimestamp = nextUnlock?.unix_timestamp || demoUnlockTimestamp || LAUNCH_TIMESTAMP;
 
     return (
         <div className="relative h-screen w-full overflow-hidden bg-[#0a0c10] text-[#00ff41] font-sans selection:bg-emerald-500/30">
