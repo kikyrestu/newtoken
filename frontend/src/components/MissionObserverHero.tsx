@@ -270,7 +270,7 @@ const MissionObserverHeroInner = () => {
                     <main className="flex-1 flex flex-col justify-start min-h-0 pointer-events-auto">
 
                         {/* CENTER DISPLAY AREA - Timer with Visual Editor */}
-                        <div className={`absolute inset-0 flex items-center justify-center px-4 z-[600] ${showSafetyModal || showInstructionsModal || showAboutModal ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+                        <div className={`absolute inset-0 flex items-start justify-center pt-44 px-4 z-[600] ${showSafetyModal || showInstructionsModal || showAboutModal ? 'pointer-events-auto overflow-y-auto' : 'pointer-events-none'}`}>
                             {!showSafetyModal && !showInstructionsModal && !showAboutModal ? (
                                 <div className="flex flex-col items-center gap-2 pointer-events-auto">
                                     {/* Hero Text */}
