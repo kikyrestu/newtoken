@@ -3,7 +3,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { useUserDashboard } from '../hooks/useUserDashboard';
 import { useLockProgram } from '../hooks/useLockProgram';
 import { StakingPanel } from './StakingPanel';
-import { Star, CircleDollarSign, Lock, Flame, Clock, CheckCircle, XCircle, AlertTriangle, Award, Circle, Radio } from 'lucide-react';
+import { Star, CircleDollarSign, Lock, Flame, Clock, CheckCircle, XCircle, AlertTriangle, Award, Circle } from 'lucide-react';
 
 // ============================================================================
 // TAB STRUCTURE DEFINITION
@@ -15,7 +15,7 @@ const TOP_TABS: { key: TopTab; label: string }[] = [
     { key: 'overview', label: 'OVERVIEW' },
     { key: 'mymissions', label: 'My Missions' },
     { key: 'live', label: 'LIVE' },
-    { key: 'earn', label: 'EARN' },
+    { key: 'earn', label: 'BENEFITS' },
 ];
 
 const SIDEBAR_TABS: Record<TopTab, { key: string; label: string }[]> = {
@@ -30,11 +30,10 @@ const SIDEBAR_TABS: Record<TopTab, { key: string; label: string }[]> = {
         { key: 'controls', label: 'CONTROLS' },
     ],
     live: [
-        { key: 'cam', label: '(Cam)' },
-        { key: 'activedrones', label: 'Active Drones' },
+        { key: 'cam', label: 'ACCESS' },
     ],
     earn: [
-        { key: 'staking', label: 'Staking' },
+        { key: 'staking', label: 'BENEFITS' },
     ],
 };
 
@@ -89,7 +88,7 @@ export const UserDashboard: React.FC = () => {
     if (!connected) {
         return (
             <div className="text-center p-8 border border-dashed border-gray-700 rounded-xl">
-                <p className="text-gray-400 mb-2">Connect wallet to access Mission Control</p>
+                <p className="text-gray-400 mb-2">Connect wallet to access Mission Control Center</p>
             </div>
         );
     }
@@ -103,7 +102,7 @@ export const UserDashboard: React.FC = () => {
             {/* TITLE */}
             <div className="text-center py-2 md:py-4 flex-shrink-0">
                 <h2 className="text-base md:text-xl font-bold text-[#00ff41] tracking-widest uppercase">
-                    MISSION CONTROL
+                    MISSION CONTROL CENTER
                 </h2>
             </div>
 
@@ -225,24 +224,17 @@ function renderContent(topTab: TopTab, sidebarTab: string, props: ContentProps):
         case 'live:cam':
             return (
                 <div className="flex flex-col items-center justify-center h-full">
-                    <p className="text-gray-400 text-sm mb-6">Live drone camera feeds will be available after mission launch</p>
+                    <p className="text-gray-400 text-sm mb-6 text-center max-w-md leading-relaxed">
+                        At countdown zero, a 15-minute confirmation window begins.
+                        Click 'Mission Access' within this time to secure your slot.
+                        The mission interface will launch in a new tab.
+                    </p>
                     <button
                         disabled
                         className="px-6 py-2 bg-gray-800/50 border border-gray-600 text-gray-400 text-xs font-bold uppercase rounded cursor-not-allowed"
                     >
                         Mission Access
                     </button>
-                </div>
-            );
-
-        // ================================================================
-        // LIVE > ACTIVE DRONES
-        // ================================================================
-        case 'live:activedrones':
-            return (
-                <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                    <Radio className="w-12 h-12 mb-4 text-gray-600" />
-                    <p className="text-sm">Active drones will be available after mission launch</p>
                 </div>
             );
 

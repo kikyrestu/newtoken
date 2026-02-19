@@ -89,7 +89,6 @@ export const StakingPanel: React.FC = () => {
 
             {/* Staking Tiers */}
             <div className="space-y-3">
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Stake New Tokens</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {tiers.map((tier) => (
                         <TierCard

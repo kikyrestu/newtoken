@@ -1,11 +1,12 @@
 import React from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Shield, Info, ArrowLeftRight, LayoutDashboard } from 'lucide-react';
+import { Shield, Info, ArrowLeftRight, LayoutDashboard, FileText } from 'lucide-react';
 import { TacticalWalletButton } from './TacticalWalletButton';
 
 interface MobileHeaderProps {
     onSafetyClick: () => void;
     onInstructionsClick: () => void;
+    onAboutClick: () => void;
     onSwapClick: () => void;
     onDashboardClick: () => void;
     showDashboard: boolean;
@@ -14,6 +15,7 @@ interface MobileHeaderProps {
 export const MobileHeader: React.FC<MobileHeaderProps> = ({
     onSafetyClick,
     onInstructionsClick,
+    onAboutClick,
     onSwapClick,
     onDashboardClick,
     showDashboard
@@ -23,6 +25,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
     const pills = [
         { id: 'safety', label: 'Safety', icon: Shield, onClick: onSafetyClick, active: false },
         { id: 'instructions', label: 'Instructions', icon: Info, onClick: onInstructionsClick, active: false },
+        { id: 'about', label: 'About', icon: FileText, onClick: onAboutClick, active: false },
         { id: 'swap', label: 'Swap', icon: ArrowLeftRight, onClick: onSwapClick, active: false },
         ...(connected ? [{
             id: 'dashboard',

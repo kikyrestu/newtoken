@@ -16,6 +16,7 @@ import { Shield, X } from 'lucide-react';
 import { VisualEditorProvider, VisualEditorControls, useVisualEditor } from './VisualEditorControls';
 import { EditableText } from './EditableText';
 import { TierDetailModal } from './TierDetailModal';
+import { AboutModal } from './AboutModal';
 import { type TierType } from '../hooks/useLockProgram';
 import { useBlockchainConfig } from '../hooks/useBlockchainConfig';
 
@@ -89,6 +90,7 @@ const MissionObserverHeroInner = () => {
     const [showDashboard, setShowDashboard] = useState(false);
     const [showSafetyModal, setShowSafetyModal] = useState(false);
     const [showInstructionsModal, setShowInstructionsModal] = useState(false);
+    const [showAboutModal, setShowAboutModal] = useState(false);
     const [activeTierModal, setActiveTierModal] = useState<TierType | null>(null); // New state for Tier Detail Modal
     const [isClosingModal, setIsClosingModal] = useState(false);
 
@@ -108,11 +110,12 @@ const MissionObserverHeroInner = () => {
     }, []);
 
     // Handle modal close with TV off animation
-    const handleCloseModal = (modalType: 'safety' | 'instructions') => {
+    const handleCloseModal = (modalType: 'safety' | 'instructions' | 'about') => {
         setIsClosingModal(true);
         setTimeout(() => {
             if (modalType === 'safety') setShowSafetyModal(false);
             if (modalType === 'instructions') setShowInstructionsModal(false);
+            if (modalType === 'about') setShowAboutModal(false);
             setIsClosingModal(false);
         }, 400); // Match animation duration
     };
@@ -184,6 +187,11 @@ const MissionObserverHeroInner = () => {
                     <MobileHeader
                         onSafetyClick={() => setShowSafetyModal(true)}
                         onInstructionsClick={() => setShowInstructionsModal(true)}
+                        onAboutClick={() => {
+                            setShowAboutModal(true);
+                            setShowSafetyModal(false);
+                            setShowInstructionsModal(false);
+                        }}
                         onSwapClick={() => setShowSwapModal(true)}
                         onDashboardClick={() => setShowDashboard(!showDashboard)}
                         showDashboard={showDashboard}
@@ -211,11 +219,11 @@ const MissionObserverHeroInner = () => {
                                 filter: 'drop-shadow(0 0 8px rgba(0,255,65,0.7)) drop-shadow(0 0 15px rgba(0,255,65,0.5)) brightness(0) invert(1)',
                             }}
                         />
-                        {/* Drone Logo (bigger) */}
+                        {/* Drone Logo (bigger - increased 35% per Vanja) */}
                         <img
                             src="/logo.png"
                             alt="Drone"
-                            className="w-20 h-20 lg:w-28 lg:h-28 object-contain drop-shadow-[0_0_15px_rgba(0,255,65,0.6)]"
+                            className="w-28 h-28 lg:w-40 lg:h-40 object-contain drop-shadow-[0_0_15px_rgba(0,255,65,0.6)]"
                         />
                         {/* UA text with green glow */}
                         <img
@@ -240,6 +248,16 @@ const MissionObserverHeroInner = () => {
                             </button>
                         )}
                         <button
+                            onClick={() => {
+                                setShowAboutModal(true);
+                                setShowSafetyModal(false);
+                                setShowInstructionsModal(false);
+                            }}
+                            className={`text-white font-bold text-base hover:text-[#00ff41] transition-colors px-2 py-1 ${showAboutModal ? 'text-[#00ff41]' : ''}`}
+                        >
+                            About
+                        </button>
+                        <button
                             onClick={() => setShowSwapModal(true)}
                             className="text-white font-bold text-base hover:text-[#00ff41] transition-colors px-2 py-1"
                         >
@@ -256,11 +274,37 @@ const MissionObserverHeroInner = () => {
                     <main className="flex-1 flex flex-col justify-start min-h-0 pointer-events-auto">
 
                         {/* CENTER DISPLAY AREA - Timer with Visual Editor */}
-                        <div className={`absolute inset-0 flex items-center justify-center px-4 z-[600] ${showSafetyModal || showInstructionsModal ? 'pointer-events-auto' : 'pointer-events-none'}`}>
-                            {!showSafetyModal && !showInstructionsModal ? (
-                                <TimerDevice
-                                    unlockTimestamp={unlockTimestamp}
-                                    className="pointer-events-auto"
+                        <div className={`absolute inset-0 flex items-center justify-center px-4 z-[600] ${showSafetyModal || showInstructionsModal || showAboutModal ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+                            {!showSafetyModal && !showInstructionsModal && !showAboutModal ? (
+                                <div className="flex flex-col items-center gap-2 pointer-events-auto">
+                                    {/* Hero Text */}
+                                    <h1 className="text-white text-2xl md:text-4xl font-bold tracking-wider uppercase text-center"
+                                        style={{ textShadow: '0 0 20px rgba(0,255,65,0.3)' }}>
+                                        Fly Unmanned Aircraft
+                                    </h1>
+                                    <p className="text-gray-400 text-sm md:text-base tracking-widest uppercase text-center">
+                                        Control Layer for Remote Drone Operations
+                                    </p>
+                                    <p className="text-[#00ff41] text-xs md:text-sm font-bold tracking-[0.3em] uppercase mt-4">
+                                        Mission Launch In
+                                    </p>
+
+                                    {/* Timer */}
+                                    <TimerDevice
+                                        unlockTimestamp={unlockTimestamp}
+                                        className=""
+                                    />
+
+                                    {/* Tagline below timer */}
+                                    <p className="text-gray-400 text-xs md:text-sm text-center mt-2 max-w-md tracking-wide">
+                                        Limited access. Reserve your slot now and secure your mission role.
+                                    </p>
+                                </div>
+                            ) : showAboutModal ? (
+                                <AboutModal
+                                    isOpen={showAboutModal}
+                                    onClose={() => handleCloseModal('about')}
+                                    isClosing={isClosingModal}
                                 />
                             ) : showInstructionsModal ? (
                                 <InstructionsModal
@@ -410,7 +454,7 @@ const MissionObserverHeroInner = () => {
             <MobileCardCarousel
                 onSuccess={handleLockSuccess}
                 onCardClick={(tier) => setActiveTierModal(tier)}
-                hideCarousel={showSafetyModal || showInstructionsModal || showSwapModal || !!activeTierModal}
+                hideCarousel={showSafetyModal || showInstructionsModal || showSwapModal || showAboutModal || !!activeTierModal}
             />
         </div >
     );

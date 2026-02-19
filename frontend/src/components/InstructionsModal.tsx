@@ -95,8 +95,6 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
                     ))}
                 </div>
 
-                {/* Footer decorative line */}
-                <div className="mt-6 pt-4 border-t border-[#00ff41]/20" />
             </div>
         </div>
     );
