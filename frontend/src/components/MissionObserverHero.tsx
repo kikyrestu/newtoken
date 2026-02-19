@@ -295,8 +295,8 @@ const MissionObserverHeroInner = () => {
                                         className=""
                                     />
 
-                                    {/* Tagline below timer */}
-                                    <p className="text-gray-400 text-xs md:text-sm text-center mt-2 max-w-md tracking-wide">
+                                    {/* Tagline below timer - hidden on desktop to avoid card overlap */}
+                                    <p className="text-gray-400 text-xs text-center mt-2 max-w-md tracking-wide md:hidden">
                                         Limited access. Reserve your slot now and secure your mission role.
                                     </p>
                                 </div>
