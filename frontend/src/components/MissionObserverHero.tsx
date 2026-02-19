@@ -199,12 +199,20 @@ const MissionObserverHeroInner = () => {
                 </div>
 
                 {/* --- DESKTOP HEADER --- */}
-                <header className="hidden md:flex flex-shrink-0 justify-between items-start pointer-events-auto min-h-[80px] relative z-[500]">
+                <header className="hidden md:flex flex-shrink-0 justify-between items-start pointer-events-auto min-h-[80px] relative z-[700]">
                     {/* Top Left Stats - Telemetry Widget */}
                     <div className="scale-90 origin-top-left lg:scale-100">
                         <TelemetryWidget
-                            onSafetyClick={() => setShowSafetyModal(true)}
-                            onInstructionsClick={() => setShowInstructionsModal(true)}
+                            onSafetyClick={() => {
+                                setShowSafetyModal(true);
+                                setShowInstructionsModal(false);
+                                setShowAboutModal(false);
+                            }}
+                            onInstructionsClick={() => {
+                                setShowInstructionsModal(true);
+                                setShowSafetyModal(false);
+                                setShowAboutModal(false);
+                            }}
                             onAboutClick={() => {
                                 setShowAboutModal(true);
                                 setShowSafetyModal(false);
