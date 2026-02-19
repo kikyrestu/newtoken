@@ -9,7 +9,6 @@ import { TelemetryWidget } from './TelemetryWidget';
 import { DebugRuler } from './DebugRuler';
 import TimerDevice from './TimerDevice';
 import { InstructionsModal } from './InstructionsModal';
-import { ModalNavTabs } from './ModalNavTabs';
 import { MobileCardCarousel } from './MobileCardCarousel';
 import { MobileHeader } from './MobileHeader';
 import { useUserDashboard } from '../hooks/useUserDashboard';
@@ -279,7 +278,7 @@ const MissionObserverHeroInner = () => {
                     <main className="flex-1 flex flex-col justify-start min-h-0 pointer-events-auto">
 
                         {/* CENTER DISPLAY AREA - Timer with Visual Editor */}
-                        <div className={`absolute inset-0 flex items-start justify-center pt-44 px-4 z-[600] ${showSafetyModal || showInstructionsModal || showAboutModal ? 'pointer-events-auto overflow-y-auto' : 'pointer-events-none'}`}>
+                        <div className={`absolute inset-0 flex items-start justify-center pt-44 px-4 z-[600] pointer-events-none ${showSafetyModal || showInstructionsModal || showAboutModal ? 'overflow-y-auto' : ''}`}>
                             {!showSafetyModal && !showInstructionsModal && !showAboutModal ? (
                                 <div className="flex flex-col items-center gap-2 pointer-events-auto">
                                     {/* Hero Text */}
@@ -310,20 +309,12 @@ const MissionObserverHeroInner = () => {
                                     isOpen={showAboutModal}
                                     onClose={() => handleCloseModal('about')}
                                     isClosing={isClosingModal}
-                                    onNavigate={(tab) => {
-                                        if (tab === 'safety') { setShowAboutModal(false); setShowSafetyModal(true); }
-                                        else if (tab === 'participation') { setShowAboutModal(false); setShowInstructionsModal(true); }
-                                    }}
                                 />
                             ) : showInstructionsModal ? (
                                 <InstructionsModal
                                     isOpen={showInstructionsModal}
                                     onClose={() => handleCloseModal('instructions')}
                                     isClosing={isClosingModal}
-                                    onNavigate={(tab) => {
-                                        if (tab === 'safety') { setShowInstructionsModal(false); setShowSafetyModal(true); }
-                                        else if (tab === 'about') { setShowInstructionsModal(false); setShowAboutModal(true); }
-                                    }}
                                 />
                             ) : (
                                 <div className="w-full max-w-xl pointer-events-auto">
@@ -341,12 +332,6 @@ const MissionObserverHeroInner = () => {
                                         >
                                             <X size={20} />
                                         </button>
-
-                                        {/* Nav Tabs */}
-                                        <ModalNavTabs active="safety" onNavigate={(tab) => {
-                                            if (tab === 'participation') { setShowSafetyModal(false); setShowInstructionsModal(true); }
-                                            else if (tab === 'about') { setShowSafetyModal(false); setShowAboutModal(true); }
-                                        }} />
 
                                         <div className="flex items-center gap-3 mb-6">
                                             <Shield className="w-6 h-6 text-[#4fffa0]" />
