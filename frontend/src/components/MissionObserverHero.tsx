@@ -214,7 +214,7 @@ const MissionObserverHeroInner = () => {
                     </div>
 
                     {/* Center Logo & Branding - FLY [drone] UA Layout */}
-                    <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 mt-2">
+                    <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 -mt-1">
                         {/* FLY text with green glow */}
                         <img
                             src="/assets/fly-text.png"
