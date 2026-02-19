@@ -205,6 +205,11 @@ const MissionObserverHeroInner = () => {
                         <TelemetryWidget
                             onSafetyClick={() => setShowSafetyModal(true)}
                             onInstructionsClick={() => setShowInstructionsModal(true)}
+                            onAboutClick={() => {
+                                setShowAboutModal(true);
+                                setShowSafetyModal(false);
+                                setShowInstructionsModal(false);
+                            }}
                         />
                     </div>
 
@@ -248,16 +253,6 @@ const MissionObserverHeroInner = () => {
                             </button>
                         )}
                         <button
-                            onClick={() => {
-                                setShowAboutModal(true);
-                                setShowSafetyModal(false);
-                                setShowInstructionsModal(false);
-                            }}
-                            className={`text-white font-bold text-base hover:text-[#00ff41] transition-colors px-2 py-1 ${showAboutModal ? 'text-[#00ff41]' : ''}`}
-                        >
-                            About
-                        </button>
-                        <button
                             onClick={() => setShowSwapModal(true)}
                             className="text-white font-bold text-base hover:text-[#00ff41] transition-colors px-2 py-1"
                         >
@@ -265,6 +260,7 @@ const MissionObserverHeroInner = () => {
                         </button>
                         {/* Wallet Button - Tactical Theme */}
                         <TacticalWalletButton />
+
                     </div>
                 </header>
 
@@ -360,55 +356,57 @@ const MissionObserverHeroInner = () => {
                             )}
                         </div>
 
-                        {/* --- BOTTOM: MISSION CARDS --- */}
-                        <div className="hidden md:block flex-shrink-0 w-full px-2 md:px-6 pb-8 pt-2 mt-auto z-[20]">
-                            <div className="max-w-6xl mx-auto">
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 items-start">
-                                    {(() => {
-                                        const spectatorLock = dashboard?.active_locks?.find(l => l.tier === 'spectator');
-                                        const operatorLock = dashboard?.active_locks?.find(l => l.tier === 'operator');
-                                        const eliteLock = dashboard?.active_locks?.find(l => l.tier === 'elite');
+                        {/* --- BOTTOM: MISSION CARDS (hidden when any modal is open) --- */}
+                        {!showSafetyModal && !showInstructionsModal && !showAboutModal && (
+                            <div className="hidden md:block flex-shrink-0 w-full px-2 md:px-6 pb-8 pt-2 mt-auto z-[20]">
+                                <div className="max-w-6xl mx-auto">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 items-start">
+                                        {(() => {
+                                            const spectatorLock = dashboard?.active_locks?.find(l => l.tier === 'spectator');
+                                            const operatorLock = dashboard?.active_locks?.find(l => l.tier === 'operator');
+                                            const eliteLock = dashboard?.active_locks?.find(l => l.tier === 'elite');
 
-                                        return (
-                                            <>
-                                                {/* Card 1: Spectator */}
-                                                <div className="flex flex-col gap-2">
-                                                    <MissionTierCard
-                                                        tier="spectator"
-                                                        title={<EditableText storageKey="spectator_title">Observer</EditableText>}
-                                                        isLocked={!!spectatorLock}
-                                                        lockedSignature={spectatorLock?.signature}
-                                                        onClick={() => setActiveTierModal('spectator')}
-                                                    />
-                                                </div>
+                                            return (
+                                                <>
+                                                    {/* Card 1: Spectator */}
+                                                    <div className="flex flex-col gap-2">
+                                                        <MissionTierCard
+                                                            tier="spectator"
+                                                            title={<EditableText storageKey="spectator_title">Observer</EditableText>}
+                                                            isLocked={!!spectatorLock}
+                                                            lockedSignature={spectatorLock?.signature}
+                                                            onClick={() => setActiveTierModal('spectator')}
+                                                        />
+                                                    </div>
 
-                                                {/* Card 2: Operator */}
-                                                <div className="flex flex-col gap-2">
-                                                    <MissionTierCard
-                                                        tier="operator"
-                                                        title={<EditableText storageKey="operator_title">Recon Drone Operator</EditableText>}
-                                                        isLocked={!!operatorLock}
-                                                        lockedSignature={operatorLock?.signature}
-                                                        onClick={() => setActiveTierModal('operator')}
-                                                    />
-                                                </div>
+                                                    {/* Card 2: Operator */}
+                                                    <div className="flex flex-col gap-2">
+                                                        <MissionTierCard
+                                                            tier="operator"
+                                                            title={<EditableText storageKey="operator_title">Recon Drone Operator</EditableText>}
+                                                            isLocked={!!operatorLock}
+                                                            lockedSignature={operatorLock?.signature}
+                                                            onClick={() => setActiveTierModal('operator')}
+                                                        />
+                                                    </div>
 
-                                                {/* Card 3: Elite */}
-                                                <div className="flex flex-col gap-2">
-                                                    <MissionTierCard
-                                                        tier="elite"
-                                                        title={<EditableText storageKey="elite_title">Advanced Drone Operator</EditableText>}
-                                                        isLocked={!!eliteLock}
-                                                        lockedSignature={eliteLock?.signature}
-                                                        onClick={() => setActiveTierModal('elite')}
-                                                    />
-                                                </div>
-                                            </>
-                                        );
-                                    })()}
+                                                    {/* Card 3: Elite */}
+                                                    <div className="flex flex-col gap-2">
+                                                        <MissionTierCard
+                                                            tier="elite"
+                                                            title={<EditableText storageKey="elite_title">Advanced Drone Operator</EditableText>}
+                                                            isLocked={!!eliteLock}
+                                                            lockedSignature={eliteLock?.signature}
+                                                            onClick={() => setActiveTierModal('elite')}
+                                                        />
+                                                    </div>
+                                                </>
+                                            );
+                                        })()}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
                     </main>
                 )}
 
@@ -416,7 +414,7 @@ const MissionObserverHeroInner = () => {
 
             {/* USER DASHBOARD - Rendered at root level, positioned BELOW header */}
             {showDashboard && (
-                <div className="fixed top-20 md:top-24 left-0 right-0 bottom-0 flex items-stretch z-[450] p-4 pointer-events-auto">
+                <div className="fixed top-32 md:top-36 left-0 right-0 bottom-0 flex items-stretch z-[450] p-4 pointer-events-auto">
                     <div className="w-full max-w-4xl mx-auto h-full">
                         <UserDashboard />
                     </div>

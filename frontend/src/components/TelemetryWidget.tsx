@@ -24,11 +24,13 @@ type StatsData = {
 interface TelemetryWidgetProps {
     onSafetyClick: () => void;
     onInstructionsClick?: () => void;
+    onAboutClick?: () => void;
 }
 
 export const TelemetryWidget: React.FC<TelemetryWidgetProps> = ({
     onSafetyClick,
-    onInstructionsClick
+    onInstructionsClick,
+    onAboutClick
 }) => {
     const [stats, setStats] = useState<StatsData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -162,6 +164,25 @@ export const TelemetryWidget: React.FC<TelemetryWidgetProps> = ({
                     <span className="text-xs font-bold tracking-widest uppercase relative z-10">Mission Participation</span>
 
                     {/* Green dot on hover (matching Safety Protocols) */}
+                    <div className="absolute right-2 bottom-2 w-1 h-1 bg-[#00ff41] opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
+
+                {/* About Button */}
+                <button
+                    onClick={onAboutClick}
+                    className="group relative flex items-center gap-3 px-4 py-2.5 bg-black/10 backdrop-blur-sm text-gray-300 hover:text-[#00ff41] transition-all duration-300 overflow-hidden"
+                    style={{
+                        clipPath: 'polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)'
+                    }}
+                >
+                    {/* Hover Background */}
+                    <div className="absolute inset-0 bg-[#00ff41]/10 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300 ease-out" />
+
+                    {/* Icon & Text */}
+                    <Activity className="w-4 h-4 text-[#00ff41] relative z-10" />
+                    <span className="text-xs font-bold tracking-widest uppercase relative z-10">About</span>
+
+                    {/* Green dot on hover */}
                     <div className="absolute right-2 bottom-2 w-1 h-1 bg-[#00ff41] opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
             </div>
