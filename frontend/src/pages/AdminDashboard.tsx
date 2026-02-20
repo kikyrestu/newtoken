@@ -12,7 +12,8 @@ import {
     X,
     Home,
     Link2,
-    Loader2
+    Loader2,
+    Clock
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AdminOverview from '../components/admin/AdminOverview';
@@ -22,8 +23,9 @@ import AdminSettings from '../components/admin/AdminSettings';
 import AdminTierConfig from '../components/admin/AdminTierConfig';
 import AdminBlockchainConfig from '../components/admin/AdminBlockchainConfig';
 import AdminMissions from '../components/admin/AdminMissions';
+import AdminCountdown from '../components/admin/AdminCountdown';
 
-type TabType = 'overview' | 'users' | 'transactions' | 'missions' | 'settings' | 'tiers' | 'blockchain';
+type TabType = 'overview' | 'users' | 'transactions' | 'missions' | 'settings' | 'tiers' | 'blockchain' | 'countdown';
 
 const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={18} /> },
@@ -32,6 +34,7 @@ const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
     { id: 'missions', label: 'Missions', icon: <Layers size={18} /> },
     { id: 'tiers', label: 'Tier Config', icon: <Layers size={18} /> },
     { id: 'blockchain', label: 'Blockchain', icon: <Link2 size={18} /> },
+    { id: 'countdown', label: 'Countdown', icon: <Clock size={18} /> },
     { id: 'settings', label: 'Visual Editor', icon: <Settings size={18} /> },
 ];
 
@@ -87,6 +90,8 @@ export default function AdminDashboard() {
                 return <AdminTierConfig />;
             case 'blockchain':
                 return <AdminBlockchainConfig />;
+            case 'countdown':
+                return <AdminCountdown />;
             default:
                 return <AdminOverview />;
         }

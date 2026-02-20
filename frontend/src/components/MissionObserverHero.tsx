@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useSiteSettings } from '../hooks/useSiteSettings';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { TacticalWalletButton } from './TacticalWalletButton';
 import { MissionTierCard } from './MissionTierCard';
@@ -129,10 +130,16 @@ const MissionObserverHeroInner = () => {
         console.log('⏰ Timer set to:', new Date(unlockTime * 1000).toISOString());
     };
 
-    // Use unlock timestamp: prefer backend data, fallback to demo mode, then fixed launch date
-    // Launch date: Feb 26, 2026 23:59:59 UTC (+7 days from Feb 19)
-    const LAUNCH_TIMESTAMP = Math.floor(new Date('2026-02-26T23:59:59Z').getTime() / 1000);
-    const unlockTimestamp = nextUnlock?.unix_timestamp || demoUnlockTimestamp || LAUNCH_TIMESTAMP;
+    // Fetch countdown target from backend (admin configurable)
+    const { value: countdownConfig } = useSiteSettings<{ timestamp: number; label?: string }>({
+        key: 'countdown_target',
+        defaultValue: { timestamp: 0, label: 'Mission Launch In' },
+        poll: true,
+        pollInterval: 10000
+    });
+
+    // Use unlock timestamp: prefer backend data, fallback to demo mode, then admin countdown
+    const unlockTimestamp = nextUnlock?.unix_timestamp || demoUnlockTimestamp || (countdownConfig.timestamp > 0 ? countdownConfig.timestamp : undefined);
 
     return (
         <div className="relative h-screen w-full overflow-hidden bg-[#0a0c10] text-[#00ff41] font-sans selection:bg-emerald-500/30">
