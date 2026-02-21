@@ -85,13 +85,16 @@ export const MissionTierCard: React.FC<MissionTierCardProps> = ({
                     </h3>
                     <p className="text-xs text-gray-400 mb-2">{taglines[tier]}</p>
 
-                    {/* Price Display - Show original strikethrough + discounted */}
+                    {/* Price Display - Show original strikethrough + discounted + slot count */}
                     <div className="flex items-baseline gap-2">
                         <span className="text-sm text-gray-500 line-through">
                             ${tier === 'spectator' ? 25 : tier === 'operator' ? 175 : 275}
                         </span>
                         <span className="text-2xl font-bold text-[#00ff41]">
                             ${tierPricing?.current_price ?? tierPricing?.usd ?? tierInfo.usd}
+                        </span>
+                        <span className="text-sm text-gray-400 ml-auto">
+                            {tierPricing?.locked_count ?? 0} / {tier === 'spectator' ? '1000' : tier === 'operator' ? '700' : '300'} Slots
                         </span>
                     </div>
                 </div>
