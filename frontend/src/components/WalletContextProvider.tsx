@@ -14,43 +14,31 @@ const DEFAULT_RPC = import.meta.env.VITE_RPC_ENDPOINT || '';
 // Key for tracking intentional logout
 export const WALLET_DISCONNECTED_KEY = '_wallet_user_disconnected';
 
-if (import.meta.env.DEV) {
-    console.log('[WalletContext] Module loaded');
-    console.log('[WalletContext] API_BASE_URL:', API_BASE_URL);
-    console.log('[WalletContext] DEFAULT_RPC from env:', DEFAULT_RPC || '(not set)');
-}
+
 
 export const WalletContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     const [dynamicRpc, setDynamicRpc] = useState<string | null>(null);
     const [configLoaded, setConfigLoaded] = useState(false);
-    const [configError, setConfigError] = useState<string | null>(null);
+    const [_configError, setConfigError] = useState<string | null>(null);
 
-    console.log('[WalletContext] Component rendering, configLoaded:', configLoaded);
 
     // Fetch blockchain config from backend
     useEffect(() => {
-        console.log('[WalletContext] useEffect: Fetching blockchain config...');
 
         const fetchConfig = async () => {
             const configUrl = `${API_BASE_URL}/settings/blockchain_config`;
-            console.log('[WalletContext] Fetching from:', configUrl);
 
             try {
                 const response = await fetch(configUrl, {
                     headers: { 'Accept': 'application/json' }
                 });
 
-                console.log('[WalletContext] Response status:', response.status);
 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('[WalletContext] Config response:', data);
 
                     if (data.success && data.value?.rpc_url) {
-                        console.log('[WalletContext] Using dynamic RPC:', data.value.rpc_url);
                         setDynamicRpc(data.value.rpc_url);
-                    } else {
-                        console.warn('[WalletContext] No rpc_url in response, using fallback');
                     }
                 } else {
                     const errorText = await response.text();
@@ -61,7 +49,6 @@ export const WalletContextProvider: FC<{ children: ReactNode }> = ({ children })
                 console.error('[WalletContext] Config fetch error:', err);
                 setConfigError(err instanceof Error ? err.message : 'Unknown error');
             } finally {
-                console.log('[WalletContext] Config loading complete');
                 setConfigLoaded(true);
             }
         };
@@ -139,7 +126,6 @@ export const WalletContextProvider: FC<{ children: ReactNode }> = ({ children })
                     },
                     chain: 'mainnet-beta' as const,
                     onWalletNotFound: async () => {
-                        console.log('[WalletContext] No mobile wallet found');
                     }
                 })
             ];
@@ -164,12 +150,10 @@ export const WalletContextProvider: FC<{ children: ReactNode }> = ({ children })
         const tooManyErrors = errorCountRef.current >= 3;
 
         if (isRateLimited || tooManyErrors) {
-            console.warn(`[WalletContext] 🛑 Rate limit detected (errors: ${errorCountRef.current}). Disabling autoConnect for 60s.`);
             setRateLimited(true);
 
             // Re-enable after 60 seconds cooldown
             setTimeout(() => {
-                console.log('[WalletContext] ✅ Cooldown expired, re-enabling autoConnect');
                 errorCountRef.current = 0;
                 setRateLimited(false);
             }, 60000);
@@ -186,12 +170,10 @@ export const WalletContextProvider: FC<{ children: ReactNode }> = ({ children })
     // IMPORTANT: This must be BEFORE any early returns to satisfy React hooks rules
     const shouldAutoConnect = useMemo(() => {
         if (rateLimited) {
-            console.log('[WalletContext] Rate limited, autoConnect disabled');
             return false;
         }
         const userDisconnected = localStorage.getItem(WALLET_DISCONNECTED_KEY);
         if (userDisconnected === 'true') {
-            console.log('[WalletContext] User previously disconnected, autoConnect disabled');
             return false;
         }
         return true;
@@ -199,7 +181,6 @@ export const WalletContextProvider: FC<{ children: ReactNode }> = ({ children })
 
     // Don't render until config is loaded to prevent connection issues
     if (!configLoaded) {
-        console.log('[WalletContext] Waiting for config to load...');
         return (
             <div className="min-h-screen bg-[#0a0c10] flex items-center justify-center">
                 <div className="text-[#00ff41] animate-pulse">Initializing wallet...</div>
@@ -207,10 +188,7 @@ export const WalletContextProvider: FC<{ children: ReactNode }> = ({ children })
         );
     }
 
-    console.log('[WalletContext] Rendering providers with endpoint:', endpoint);
-    if (configError) {
-        console.warn('[WalletContext] Config had error but continuing:', configError);
-    }
+
 
     return (
         <ConnectionProvider endpoint={endpoint}>

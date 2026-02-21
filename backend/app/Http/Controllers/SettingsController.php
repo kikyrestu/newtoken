@@ -59,16 +59,7 @@ class SettingsController extends Controller
      */
     public function update(Request $request, string $key): JsonResponse
     {
-        // Simple admin auth check - validate frontend nexus tokens
-        // Token format: nexus_{timestamp}_{random}
-        $token = $request->header('X-Admin-Token');
-        if (!$token || !str_starts_with($token, 'nexus_') || strlen($token) < 20) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Unauthorized'
-            ], 401);
-        }
-
+        // Auth handled by admin.auth middleware
         $value = $request->input('value');
 
         if ($value === null) {
@@ -96,15 +87,7 @@ class SettingsController extends Controller
      */
     public function delete(Request $request, string $key): JsonResponse
     {
-        // Simple admin auth check - validate frontend nexus tokens
-        $token = $request->header('X-Admin-Token');
-        if (!$token || !str_starts_with($token, 'nexus_') || strlen($token) < 20) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Unauthorized'
-            ], 401);
-        }
-
+        // Auth handled by admin.auth middleware
         $deleted = SiteSetting::where('key', $key)->delete();
 
         return response()->json([

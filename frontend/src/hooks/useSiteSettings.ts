@@ -66,7 +66,6 @@ export function useSiteSettings<T>({
                 setValueState(data.value as T);
             }
         } catch (err) {
-            console.debug(`[Settings] Failed to fetch ${key}:`, err);
             // Don't set error, just use default
         } finally {
             setLoading(false);
@@ -78,14 +77,13 @@ export function useSiteSettings<T>({
      */
     const setValue = useCallback(async (newValue: T): Promise<boolean> => {
         if (!isAdminAuthenticated) {
-            console.warn('[Settings] Only admins can update settings');
             return false;
         }
 
         try {
             setError(null);
 
-            const response = await fetch(`${API_BASE_URL}/settings/${key}`, {
+            const response = await fetch(`${API_BASE_URL}/admin/settings/${key}`, {
                 method: 'PUT',
                 headers: {
                     'Accept': 'application/json',
@@ -102,7 +100,6 @@ export function useSiteSettings<T>({
 
             // Update local state
             setValueState(newValue);
-            console.log(`[Settings] Saved ${key}:`, newValue);
             return true;
         } catch (err: any) {
             console.error(`[Settings] Failed to save ${key}:`, err);
@@ -116,12 +113,11 @@ export function useSiteSettings<T>({
      */
     const reset = useCallback(async (): Promise<boolean> => {
         if (!isAdminAuthenticated) {
-            console.warn('[Settings] Only admins can reset settings');
             return false;
         }
 
         try {
-            const response = await fetch(`${API_BASE_URL}/settings/${key}`, {
+            const response = await fetch(`${API_BASE_URL}/admin/settings/${key}`, {
                 method: 'DELETE',
                 headers: {
                     'Accept': 'application/json',

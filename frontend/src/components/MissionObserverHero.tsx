@@ -122,12 +122,10 @@ const MissionObserverHeroInner = () => {
     };
 
     // Handle lock success - update local timer for demo mode
-    const handleLockSuccess = (tier: string, signature: string) => {
-        console.log(`🔐 ${tier} locked:`, signature);
+    const handleLockSuccess = (_tier: string, _signature: string) => {
         // Set demo unlock timestamp to 30 days from now (in seconds)
         const unlockTime = Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60);
         setDemoUnlockTimestamp(unlockTime);
-        console.log('⏰ Timer set to:', new Date(unlockTime * 1000).toISOString());
     };
 
     // Fetch countdown target from backend (admin configurable)
@@ -457,8 +455,7 @@ const MissionObserverHeroInner = () => {
                 onClose={() => setShowSwapModal(false)}
                 outputMint={blockchainConfig.token_mint || ''}
                 fixedOutput={true}
-                onSuccess={(txid) => {
-                    console.log('Swap successful:', txid);
+                onSuccess={(_txid) => {
                     setShowSwapModal(false);
                 }}
             />

@@ -136,7 +136,6 @@ export default function TimerDevice({
         setIsSaving(false);
 
         if (success) {
-            console.log(`Position saved to backend (${isMobile ? 'mobile' : 'desktop'}):`, position);
         }
     }, [position, isMobile, saveMobileToBackend, saveDesktopToBackend]);
 

@@ -6,7 +6,6 @@ import { Wallet, LogOut, AlertCircle } from 'lucide-react';
 import { NoWalletModal } from './NoWalletModal';
 import { WALLET_DISCONNECTED_KEY } from './WalletContextProvider';
 
-console.log('[TacticalWalletButton] Module loaded');
 
 interface TacticalWalletButtonProps {
     compact?: boolean;
@@ -41,23 +40,7 @@ export const TacticalWalletButton: React.FC<TacticalWalletButtonProps> = ({ comp
     // On desktop: only use installed wallets
     const preferredWallet = isMobile && !installedWallet ? mobileWalletAdapter : installedWallet;
 
-    // Log wallet state only in development mode
-    if (import.meta.env.DEV) {
-        console.log('[TacticalWalletButton] Rendering:', {
-            connected,
-            connecting,
-            isMobile,
-            publicKey: publicKey?.toBase58() || null,
-            wallet: wallet?.adapter?.name || null,
-            installedWallet: installedWallet?.adapter?.name || 'none',
-            mobileWalletAdapter: mobileWalletAdapter?.adapter?.name || 'none',
-            preferredWallet: preferredWallet?.adapter?.name || 'none',
-            availableWallets: wallets.map(w => ({
-                name: w.adapter.name,
-                readyState: w.adapter.readyState,
-            }))
-        });
-    }
+
 
     // Auto-select preferred wallet on mount ONCE (MWA on mobile, installed wallet on desktop)
     // Guard with a ref to prevent repeated selections that trigger reconnection loops
@@ -65,7 +48,6 @@ export const TacticalWalletButton: React.FC<TacticalWalletButtonProps> = ({ comp
     useEffect(() => {
         if (!wallet && preferredWallet && !autoSelectedRef.current) {
             autoSelectedRef.current = true;
-            console.log('[TacticalWalletButton] Auto-selecting:', preferredWallet.adapter.name);
             select(preferredWallet.adapter.name);
         }
     }, [wallet, preferredWallet, select]);
@@ -79,18 +61,14 @@ export const TacticalWalletButton: React.FC<TacticalWalletButtonProps> = ({ comp
         e.stopPropagation();
         e.preventDefault();
 
-        console.log('[TacticalWalletButton] Button clicked!', { connected, connecting });
 
         if (connected) {
-            console.log('[TacticalWalletButton] Disconnecting...');
             try {
                 await disconnect();
-                console.log('[TacticalWalletButton] Disconnected successfully');
             } catch (err) {
                 console.error('[TacticalWalletButton] Disconnect error:', err);
             }
         } else if (preferredWallet) {
-            console.log('[TacticalWalletButton] Connecting to:', preferredWallet.adapter.name);
             try {
                 // Select wallet first if not already selected
                 if (!wallet || wallet.adapter.name !== preferredWallet.adapter.name) {
@@ -107,7 +85,6 @@ export const TacticalWalletButton: React.FC<TacticalWalletButtonProps> = ({ comp
                 );
 
                 await Promise.race([connectPromise, timeoutPromise]);
-                console.log('[TacticalWalletButton] Connection initiated!');
 
                 // Clear disconnect flag so autoConnect works next time
                 localStorage.removeItem(WALLET_DISCONNECTED_KEY);
@@ -118,14 +95,12 @@ export const TacticalWalletButton: React.FC<TacticalWalletButtonProps> = ({ comp
                     alert('Wallet connection timed out. Please make sure your wallet app is open and try again.');
                 } else if (isMobile && mobileWalletAdapter) {
                     // User rejected or other error - on mobile MWA failure, show modal
-                    console.log('[TacticalWalletButton] MWA failed, showing install modal');
                     setShowNoWalletModal(true);
                 } else if (err?.name !== 'WalletConnectionError') {
                     alert(`Wallet connection failed: ${err?.message || 'Unknown error'}`);
                 }
             }
         } else {
-            console.log('[TacticalWalletButton] No wallet available! Showing modal...');
             setShowNoWalletModal(true);
         }
     }, [connected, connecting, wallet, preferredWallet, isMobile, mobileWalletAdapter, select, connect, disconnect]);
@@ -135,16 +110,13 @@ export const TacticalWalletButton: React.FC<TacticalWalletButtonProps> = ({ comp
     const handleDisconnect = useCallback(async (e: React.MouseEvent) => {
         e.stopPropagation();
         e.preventDefault();
-        console.log('[TacticalWalletButton] Disconnect clicked!');
 
         try {
             // Set flag FIRST so WalletProvider knows not to auto-reconnect
             localStorage.setItem(WALLET_DISCONNECTED_KEY, 'true');
-            console.log('[TacticalWalletButton] Set disconnect flag');
 
             // Disconnect wallet
             await disconnect();
-            console.log('[TacticalWalletButton] Disconnected successfully');
 
             // Reload page to reset WalletProvider state completely
             window.location.reload();
