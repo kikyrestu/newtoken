@@ -370,7 +370,7 @@ const OverviewMissions: React.FC<ContentProps> = ({ onNavigate }) => (
                     </thead>
                     <tbody>
                         {(() => {
-                            const targetDate = new Date('2026-03-14T14:00:00Z');
+                            const targetDate = new Date('2026-03-21T14:00:00Z');
                             const now = new Date();
                             const baseDays = Math.max(0, Math.ceil((targetDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
 
