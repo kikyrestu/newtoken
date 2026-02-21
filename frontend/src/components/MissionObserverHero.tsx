@@ -308,8 +308,8 @@ const MissionObserverHeroInner = () => {
                                         className=""
                                     />
 
-                                    {/* Tagline below timer - hidden on desktop to avoid card overlap */}
-                                    <p className="text-[#00ff41] text-xs md:text-sm font-bold tracking-[0.3em] uppercase text-center mt-2 max-w-md md:hidden">
+                                    {/* Tagline below timer - mobile only */}
+                                    <p className="text-gray-400 text-xs text-center mt-2 max-w-md tracking-wide md:hidden">
                                         Limited access. Reserve your slot now and secure your mission role.
                                     </p>
                                 </div>
@@ -377,7 +377,7 @@ const MissionObserverHeroInner = () => {
                         {/* --- BOTTOM: MISSION CARDS (hidden when any modal is open) --- */}
                         {!showSafetyModal && !showInstructionsModal && !showAboutModal && (
                             <div className="hidden md:block flex-shrink-0 w-full px-2 md:px-6 pb-8 pt-2 mt-auto z-[20]">
-                                <p className="text-[#00ff41] text-xs md:text-sm font-bold tracking-[0.3em] uppercase text-center mb-3 max-w-lg mx-auto">
+                                <p className="text-gray-400 text-xs text-center mb-3 max-w-lg mx-auto tracking-wide">
                                     Limited access. Reserve your slot now and secure your mission role.
                                 </p>
                                 <div className="max-w-6xl mx-auto">
@@ -426,9 +426,6 @@ const MissionObserverHeroInner = () => {
                                         })()}
                                     </div>
                                 </div>
-                                <p className="text-gray-400 text-sm text-center mt-4 max-w-2xl mx-auto tracking-wide">
-                                    The mission will proceed as scheduled, regardless of participation volume, weather, or other external factors.
-                                </p>
                             </div>
                         )}
                     </main>
