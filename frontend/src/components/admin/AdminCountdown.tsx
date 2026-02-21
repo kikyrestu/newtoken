@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSiteSettings } from '../../hooks/useSiteSettings';
 import { Clock, Save, RotateCcw, Plus, CheckCircle, AlertCircle } from 'lucide-react';
 
@@ -25,14 +25,17 @@ export default function AdminCountdown() {
     const [saving, setSaving] = useState(false);
     const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
     const [liveCountdown, setLiveCountdown] = useState('');
+    const hasInitialized = useRef(false);
 
-    // Sync form with loaded config
+    // Sync form with loaded config - ONLY on initial load
     useEffect(() => {
+        if (hasInitialized.current) return;
         if (config && config.timestamp > 0) {
             const d = new Date(config.timestamp * 1000);
             setTargetDate(d.toISOString().split('T')[0]);
             setTargetTime(d.toISOString().split('T')[1].substring(0, 5));
             setLabel(config.label || 'Mission Launch In');
+            hasInitialized.current = true;
         }
     }, [config]);
 
