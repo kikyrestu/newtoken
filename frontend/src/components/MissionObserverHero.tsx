@@ -352,7 +352,7 @@ const MissionObserverHeroInner = () => {
                                             {[
                                                 { title: "Altitude Enforcement", desc: "Drone automatically climbs to its assigned altitude. Height adjustments allowed only within safe limits." },
                                                 { title: "Geo-Fence Active", desc: "Flight area strictly defined — operation outside the zone is blocked." },
-                                                { title: "Anti-Collision / Swarm Separation", desc: "Active system prevents contact with other drones or obstacles + crash prevention.", badge: "Active" },
+                                                { title: "Anti-Collision / Swarm Separation", desc: "Active system prevents contact with other drones or obstacles + crash prevention." },
                                                 { title: "Signal Loss Response", desc: "Auto-hover, stabilization, RTB (Return to Base)." },
                                                 { title: "Continuous Monitoring", desc: "Live telemetry + full mission logging for audit/replay." },
                                                 { title: "Certified Operator Oversight", desc: "All missions supervised by trained operators." }
@@ -360,9 +360,8 @@ const MissionObserverHeroInner = () => {
                                                 <div key={index} className="flex items-start gap-3">
                                                     <span className="inline-block w-2 h-2 bg-[#4fffa0] rounded-full mt-2 flex-shrink-0" />
                                                     <div className="flex-1">
-                                                        <div className="flex items-center gap-2">
+                                                        <div>
                                                             <span className="text-sm font-bold text-white">{item.title}</span>
-                                                            {item.badge && <span className="text-[10px] px-2 py-0.5 rounded bg-[#4fffa0]/20 text-[#4fffa0] font-medium">{item.badge}</span>}
                                                         </div>
                                                         <p className="text-sm text-gray-400 mt-1 leading-relaxed">{item.desc}</p>
                                                     </div>
