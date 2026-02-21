@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Target, Wallet, CheckCircle, Lock, RefreshCw, Zap } from 'lucide-react';
+import { X, Target, Wallet, CheckCircle, Lock, RefreshCw, Zap, AlertCircle } from 'lucide-react';
 
 interface InstructionsModalProps {
     isOpen: boolean;
@@ -51,6 +51,9 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
         }
     ];
 
+    const disclaimer = "The mission will proceed as scheduled, regardless of participation volume, weather, or other external factors.";
+
+
     return (
         <div className="w-full max-w-xl pointer-events-auto">
             {/* Styled Modal with TV Animation */}
@@ -94,6 +97,14 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
                             </div>
                         </div>
                     ))}
+
+                    {/* Essential Disclaimer - highlighted */}
+                    <div className="mt-6 p-3 bg-yellow-500/10 border border-yellow-500/40 rounded-lg flex items-start gap-3">
+                        <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-yellow-300 font-semibold leading-relaxed">
+                            {disclaimer}
+                        </p>
+                    </div>
                 </div>
 
             </div>

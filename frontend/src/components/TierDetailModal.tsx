@@ -23,7 +23,7 @@ const TIER_CONTENT = {
             'Monitor active drones in real time',
             'Live access to drone camera feeds',
             'Tactical overview of the mission area',
-            'Select and follow mission assets',
+
             'Tag objects of interest within target zone',
             'Earn Mission Points for future benefits'
         ],
@@ -40,10 +40,10 @@ const TIER_CONTENT = {
             'Real-time flight and camera operation',
             'Expanded tactical overview of mission area',
             'Identify and tag objects in the target zone',
-            'Automated indirect command interaction',
+
             'Earn increased Mission Points'
         ],
-        rewards: ['3% Token Reward', 'Early Access Discount'],
+        rewards: ['3% Token Reward', 'Early Access Discount', '30% off your next mission'],
         roleFocus: 'Role focus: reconnaissance and supervised operational support',
         maxSlots: 700,
         cta: 'Claim your Recon Operator Position'
@@ -59,7 +59,7 @@ const TIER_CONTENT = {
             'Priority assignments and direct command interaction',
             'Earn priority Mission Points'
         ],
-        rewards: ['3% Token Reward', 'Early Access Discount'],
+        rewards: ['3% Token Reward', 'Early Access Discount', '50% off your next mission'],
         roleFocus: 'Role focus: execution, intervention, and mission continuity',
         maxSlots: 300,
         cta: 'Secure your Elite Operator Slot'

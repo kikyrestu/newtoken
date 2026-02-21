@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useUserDashboard } from '../hooks/useUserDashboard';
 import { useLockProgram } from '../hooks/useLockProgram';
+import { StakingPanel } from './StakingPanel';
 
 import { Star, CircleDollarSign, Lock, Flame, Clock, CheckCircle, XCircle, AlertTriangle, Award, Circle } from 'lucide-react';
 
@@ -243,10 +244,13 @@ function renderContent(topTab: TopTab, sidebarTab: string, props: ContentProps):
         // ================================================================
         case 'earn:staking':
             return (
-                <div className="flex items-center justify-center p-12">
-                    <p className="text-red-500 text-xl font-bold uppercase tracking-widest">
-                        Staking soon available
-                    </p>
+                <div className="space-y-4">
+                    <div className="text-center p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+                        <p className="text-red-500 text-sm font-bold uppercase tracking-widest">
+                            Staking soon available
+                        </p>
+                    </div>
+                    <StakingPanel />
                 </div>
             );
 
