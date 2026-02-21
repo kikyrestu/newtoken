@@ -22,9 +22,9 @@ const DiscordIcon = () => (
 
 export const Footer: React.FC = () => {
     const socialLinks = [
-        { name: 'X', icon: <XIcon />, href: '#' },
-        { name: 'Telegram', icon: <TelegramIcon />, href: '#' },
-        { name: 'Discord', icon: <DiscordIcon />, href: '#' },
+        { name: 'X', icon: <XIcon />, href: 'https://x.com/flyUAlive' },
+        { name: 'Telegram', icon: <TelegramIcon />, href: 'https://t.me/FLYUAofficial' },
+        { name: 'Discord', icon: <DiscordIcon />, href: 'https://discord.gg/YKhEVKbK' },
     ];
 
     return (
