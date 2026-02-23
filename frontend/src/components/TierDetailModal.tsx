@@ -205,7 +205,7 @@ export const TierDetailModal: React.FC<TierDetailModalProps> = ({
                             <div className="text-center mb-4">
                                 <div className="flex items-center justify-center gap-2 text-sm">
                                     <span className="text-gray-500 line-through">
-                                        ${tier === 'spectator' ? 25 : tier === 'operator' ? 175 : 275}
+                                        ${tier === 'spectator' ? 25 : tier === 'operator' ? 150 : 250}
                                     </span>
                                     <span className="text-[#00ff41] font-bold text-lg">
                                         ${tierPricing.current_price}
