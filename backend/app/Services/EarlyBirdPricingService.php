@@ -10,25 +10,25 @@ class EarlyBirdPricingService
         'spectator' => [
             'base_price' => 25.00,
             'brackets' => [
-                ['max' => 200, 'discount_percent' => 20],
-                ['max' => 400, 'discount_percent' => 10],
-                ['max' => null, 'discount_percent' => 0],
+                ['max' => 200, 'fixed_price' => 20.00],
+                ['max' => 400, 'fixed_price' => 22.50],
+                ['max' => null, 'fixed_price' => null],
             ],
         ],
         'operator' => [
             'base_price' => 150.00,
             'brackets' => [
-                ['max' => 100, 'discount_percent' => 20],
-                ['max' => 200, 'discount_percent' => 10],
-                ['max' => null, 'discount_percent' => 0],
+                ['max' => 100, 'fixed_price' => 100.00],
+                ['max' => 200, 'fixed_price' => 125.00],
+                ['max' => null, 'fixed_price' => null],
             ],
         ],
         'elite' => [
             'base_price' => 250.00,
             'brackets' => [
-                ['max' => 50, 'discount_percent' => 20],
-                ['max' => 100, 'discount_percent' => 10],
-                ['max' => null, 'discount_percent' => 0],
+                ['max' => 50, 'fixed_price' => 175.00],
+                ['max' => 100, 'fixed_price' => 212.50],
+                ['max' => null, 'fixed_price' => null],
             ],
         ],
     ];
@@ -77,8 +77,12 @@ class EarlyBirdPricingService
         $activeIndex = $this->resolveBracketIndex($lockedCount, $brackets);
         $activeBracket = $brackets[$activeIndex];
 
-        $discountPercent = (int) $activeBracket['discount_percent'];
-        $currentPrice = $this->applyDiscount($basePrice, $discountPercent);
+        // Use fixed_price if set, otherwise fall back to base_price
+        $currentPrice = $activeBracket['fixed_price'] !== null
+            ? (float) $activeBracket['fixed_price']
+            : $basePrice;
+
+        $discountPercent = $basePrice > 0 ? (int) round((1 - $currentPrice / $basePrice) * 100) : 0;
 
         $remainingSlots = null;
         if ($activeBracket['max'] !== null) {
@@ -88,7 +92,9 @@ class EarlyBirdPricingService
         $nextPrice = $currentPrice;
         $nextIndex = $activeIndex + 1;
         if (isset($brackets[$nextIndex])) {
-            $nextPrice = $this->applyDiscount($basePrice, (int) $brackets[$nextIndex]['discount_percent']);
+            $nextPrice = $brackets[$nextIndex]['fixed_price'] !== null
+                ? (float) $brackets[$nextIndex]['fixed_price']
+                : $basePrice;
         }
 
         return [
